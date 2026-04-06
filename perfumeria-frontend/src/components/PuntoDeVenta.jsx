@@ -5,7 +5,6 @@ const PuntoDeVenta = () => {
   const navigate = useNavigate();
   const [basesDisponibles, setBasesDisponibles] = useState([]);
   
-  // Estados del Formulario de Venta
   const [fraganciaBuscada, setFraganciaBuscada] = useState('');
   const [tamano, setTamano] = useState(30);
   const [tipoFrasco, setTipoFrasco] = useState('Estandar');
@@ -15,17 +14,15 @@ const PuntoDeVenta = () => {
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // NUEVO: Estados para el Modal de Contraseña
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passData, setPassData] = useState({ actual: '', nueva: '', confirmar: '' });
   const [passStatus, setPassStatus] = useState({ loading: false, error: '', success: '' });
 
-  // Tablas de precios exactas
   const preciosEstandar = { 5: 20, 10: 40, 30: 70, 50: 95, 100: 145 };
   const preciosPremium = { 30: 80, 50: 105, 100: 155 };
 
   useEffect(() => {
-    fetch('http://localhost:3000/fragancias')
+    fetch('https://perfumeria-final-b.onrender.com/fragancias')
       .then(res => res.json())
       .then(data => setBasesDisponibles(data))
       .catch(err => console.error("Error:", err));
@@ -62,7 +59,7 @@ const PuntoDeVenta = () => {
     }
 
     const totalCobro = calcularTotal();
-    const confirmar = window.confirm(`⚠️ CONFIRMACIÓN DE VENTA\n\nEstás a punto de cobrar Bs. ${totalCobro} por la fragancia ${baseSeleccionada.nombre}.\n\n¿Deseas continuar?`);
+    const confirmar = window.confirm(` CONFIRMACIÓN DE VENTA\n\nEstás a punto de cobrar Bs. ${totalCobro} por la fragancia ${baseSeleccionada.nombre}.\n\n¿Deseas continuar?`);
     if (!confirmar) return;
 
     setIsSubmitting(true);
@@ -78,7 +75,7 @@ const PuntoDeVenta = () => {
     };
 
     try {
-      const res = await fetch('http://localhost:3000/ventas', {
+      const res = await fetch('https://perfumeria-final-b.onrender.com/ventas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(venta)
@@ -86,11 +83,11 @@ const PuntoDeVenta = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert(`✅ ¡Venta Registrada Correctamente!\nTotal Cobrado: Bs. ${totalCobro}`);
+        alert(` ¡Venta Registrada Correctamente!\nTotal Cobrado: Bs. ${totalCobro}`);
         setFraganciaBuscada(''); setTamano(30); setTipoFrasco('Estandar');
         setFeromonas(0); setFijador(0); setElixir(false); setMetodoPago('Efectivo');
       } else {
-        alert(`❌ Error: ${data.error}`);
+        alert(` Error: ${data.error}`);
       }
     } catch (err) {
       alert("Error conectando al servidor");
@@ -99,7 +96,6 @@ const PuntoDeVenta = () => {
     }
   };
 
-  // NUEVO: Lógica para cambiar la contraseña
   const handleCambiarPassword = async (e) => {
     e.preventDefault();
     setPassStatus({ loading: true, error: '', success: '' });
@@ -112,7 +108,7 @@ const PuntoDeVenta = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/usuarios/password', {
+      const res = await fetch('https://perfumeria-final-b.onrender.com/usuarios/password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -142,7 +138,6 @@ const PuntoDeVenta = () => {
     <div className="min-h-screen bg-michova-black text-white p-4 md:p-8 font-sans relative" translate="no">
       <div className="max-w-6xl mx-auto">
         
-        {/* ENCABEZADO */}
         <header className="mb-6 border-b border-[#333] pb-4 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold text-michova-gold tracking-widest">MICHOVA</h1>
@@ -155,7 +150,6 @@ const PuntoDeVenta = () => {
               <button onClick={() => navigate('/dashboard')} className="bg-[#222] hover:bg-[#333] px-4 py-2 rounded text-sm transition-colors">Panel Admin</button>
             )}
             
-            {/* NUEVO: Botón de Configuración */}
             <button 
               onClick={() => setShowPasswordModal(true)} 
               className="text-gray-400 hover:text-white px-2 py-2 rounded text-sm font-bold transition-colors flex items-center gap-1"
@@ -168,7 +162,6 @@ const PuntoDeVenta = () => {
           </div>
         </header>
 
-        {/* CONTENIDO PRINCIPAL (Formulario de Venta) */}
         <div className="bg-[#111] border border-[#333] rounded-lg p-6 shadow-2xl flex flex-col lg:flex-row gap-10">
           <form className="flex-1 space-y-8" onSubmit={handleCobrar}>
             <div>
@@ -270,7 +263,6 @@ const PuntoDeVenta = () => {
         </div>
       </div>
 
-      {/* NUEVO: MODAL PARA CAMBIAR CONTRASEÑA */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm p-4">
           <div className="bg-[#111] border border-[#333] rounded-lg p-8 max-w-md w-full shadow-2xl animate-fade-in">

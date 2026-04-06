@@ -5,27 +5,23 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 const Dashboard = () => {
   const navigate = useNavigate();
   
-  // Estados Globales
   const [activeTab, setActiveTab] = useState('resumen');
   const [inventario, setInventario] = useState([]);
   const [ventas, setVentas] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   
-  // Estados para Gráficos
   const [filtroTiempo, setFiltroTiempo] = useState('semanal');
   
-  // Estados para Formularios (Eliminamos precio_por_ml)
   const [nuevoPerfume, setNuevoPerfume] = useState({ nombre: '', stock_ml: '', stock_minimo: '' });
   const [editandoId, setEditandoId] = useState(null);
   const [nuevoVendedor, setNuevoVendedor] = useState({ nombre: '', email: '', password: '' });
 
-  // 1. CARGA INICIAL DE DATOS
   const cargarDatos = async () => {
     try {
       const [resFragancias, resVentas, resVendedores] = await Promise.all([
-        fetch('http://localhost:3000/fragancias'),
-        fetch('http://localhost:3000/ventas'),
-        fetch('http://localhost:3000/usuarios')
+        fetch('https://perfumeria-final-b.onrender.com/fragancias'),
+        fetch('https://perfumeria-final-b.onrender.com/ventas'),
+        fetch('https://perfumeria-final-b.onrender.com/usuarios')
       ]);
       setInventario(await resFragancias.json());
       setVentas(await resVentas.json());
@@ -39,7 +35,6 @@ const Dashboard = () => {
     cargarDatos();
   }, []);
 
-  // 2. LÓGICA DE GRÁFICOS
   const procesarDatosGrafico = () => {
     if (!Array.isArray(ventas)) return [];
     const hoy = new Date();
@@ -62,10 +57,9 @@ const Dashboard = () => {
       .reverse(); 
   };
 
-  // 3. CRUD DE INVENTARIO
   const handleGuardarPerfume = async (e) => {
     e.preventDefault();
-    const url = editandoId ? `http://localhost:3000/fragancias/${editandoId}` : 'http://localhost:3000/fragancias';
+    const url = editandoId ? `https://perfumeria-final-b.onrender.com/fragancias/${editandoId}` : 'https://perfumeria-final-b.onrender.com/fragancias';
     const method = editandoId ? 'PUT' : 'POST';
 
     await fetch(url, {
@@ -91,14 +85,13 @@ const Dashboard = () => {
 
   const handleEliminarPerfume = async (id) => {
     if(!window.confirm('¿Estás seguro de eliminar esta fragancia del sistema?')) return;
-    await fetch(`http://localhost:3000/fragancias/${id}`, { method: 'DELETE' });
+    await fetch(`https://perfumeria-final-b.onrender.com/fragancias/${id}`, { method: 'DELETE' });
     cargarDatos();
   };
 
-  // 4. GESTIÓN DE VENDEDORES
   const handleCrearVendedor = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3000/usuarios', {
+    const res = await fetch('https://perfumeria-final-b.onrender.com/usuarios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...nuevoVendedor, rol: 'vendedor' })
@@ -116,19 +109,18 @@ const Dashboard = () => {
 
   const handleQuitarAccesoVendedor = async (id) => {
     if(!window.confirm('🚨 ¿Quitar acceso a este vendedor permanentemente?')) return;
-    await fetch(`http://localhost:3000/usuarios/${id}`, { method: 'DELETE' });
+    await fetch(`https://perfumeria-final-b.onrender.com/usuarios/${id}`, { method: 'DELETE' });
     cargarDatos();
   };
 
-  // 5. BORRAR HISTORIAL DE VENTAS
   const handleBorrarHistorialVentas = async () => {
     const seguro = window.confirm('🚨 ADVERTENCIA: Estás a punto de BORRAR TODAS LAS VENTAS del sistema permanentemente. ¿Estás absolutamente seguro?');
     if (!seguro) return;
 
-    const res = await fetch('http://localhost:3000/ventas', { method: 'DELETE' });
+    const res = await fetch('https://perfumeria-final-b.onrender.com/ventas', { method: 'DELETE' });
     if (res.ok) {
       alert('Historial borrado por completo.');
-      cargarDatos(); // Recargar la tabla (quedará vacía)
+      cargarDatos(); 
     } else {
       alert('Error al intentar borrar el historial.');
     }
@@ -136,8 +128,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-michova-black text-white font-sans" translate="no">
-      
-      {/* NAVBAR SUPERIOR */}
       <header className="bg-[#0a0a0a] border-b border-[#333] p-4 sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div>
@@ -148,7 +138,7 @@ const Dashboard = () => {
           </div>
           <div className="flex gap-4">
             <button 
-              onClick={() => window.open('http://localhost:3000/reporte-excel', '_blank')} 
+              onClick={() => window.open('https://perfumeria-final-b.onrender.com/reporte-excel', '_blank')} 
               className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors"
             >
               <span>📊</span> Descargar Excel
@@ -164,8 +154,6 @@ const Dashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto p-6">
-        
-        {/* MENÚ DE PESTAÑAS */}
         <div className="flex gap-2 border-b border-[#333] mb-8 overflow-x-auto">
           {[
             { id: 'resumen', label: 'Resumen & Gráficos' },
@@ -187,9 +175,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* ======================================================== */}
-        {/* PESTAÑA: RESUMEN Y GRÁFICOS */}
-        {/* ======================================================== */}
         {activeTab === 'resumen' && (
           <div className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -237,9 +222,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* PESTAÑA: BODEGA E INVENTARIO */}
-        {/* ======================================================== */}
         {activeTab === 'inventario' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
             <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
@@ -309,9 +291,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* PESTAÑA: HISTORIAL DE VENTAS */}
-        {/* ======================================================== */}
         {activeTab === 'ventas' && (
           <div className="bg-[#111] border border-[#333] rounded overflow-hidden animate-fade-in shadow-md">
             <div className="p-4 border-b border-[#333] bg-[#0a0a0a] flex justify-between items-center">
@@ -369,9 +348,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* PESTAÑA: GESTIÓN DE VENDEDORES */}
-        {/* ======================================================== */}
         {activeTab === 'vendedores' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
             <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
@@ -410,13 +386,12 @@ const Dashboard = () => {
                       <p className="text-xs text-michova-gold mt-1">Registrado: {new Date(v.creado_en).toLocaleDateString('es-BO')}</p>
                     </div>
                     
-                    {/* Botón de eliminar (Aparece en rojo) */}
                     <button 
                       onClick={() => handleQuitarAccesoVendedor(v.id)}
                       className="bg-[#222] group-hover:bg-red-900 group-hover:text-white text-gray-500 p-3 rounded-full transition-colors"
                       title="Revocar Acceso"
                     >
-                      🚫
+                      
                     </button>
                   </div>
                 ))}

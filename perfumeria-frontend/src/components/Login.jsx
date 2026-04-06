@@ -14,8 +14,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Conexión real a tu backend
-      const res = await fetch('http://localhost:3000/login', {
+      const res = await fetch('https://perfumeria-final-b.onrender.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -24,13 +23,11 @@ const Login = () => {
       const data = await res.json();
 
       if (res.ok) {
-        // Guardamos los datos de sesión reales que vienen de Supabase
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('role', data.usuario.rol);
         localStorage.setItem('userId', data.usuario.id);
         localStorage.setItem('userName', data.usuario.nombre);
         
-        // Control de acceso estricto por rol
         if (data.usuario.rol === 'admin') {
           navigate('/dashboard');
         } else {
@@ -40,7 +37,7 @@ const Login = () => {
         setError(data.error || 'Error al iniciar sesión');
       }
     } catch (err) {
-      setError('No se pudo conectar con el servidor. Verifica que el backend esté encendido.');
+      setError('No se pudo conectar con el servidor.');
     } finally {
       setLoading(false);
     }
