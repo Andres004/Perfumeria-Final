@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme 
+{
+  --color-michova-black: #1a1a1a;
+  --color-michova-gold: #FFD700;
+  --color-michova-silver: #C0C0C0;
+}
