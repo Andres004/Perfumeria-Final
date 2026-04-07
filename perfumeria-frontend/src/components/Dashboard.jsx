@@ -16,6 +16,10 @@ const Dashboard = () => {
   const [editandoId, setEditandoId] = useState(null);
   const [nuevoVendedor, setNuevoVendedor] = useState({ nombre: '', email: '', password: '' });
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passData, setPassData] = useState({ actual: '', nueva: '', confirmar: '' });
+  const [passStatus, setPassStatus] = useState({ loading: false, error: '', success: '' });
+
   const cargarDatos = async () => {
     try {
       const [resFragancias, resVentas, resVendedores] = await Promise.all([
@@ -108,13 +112,25 @@ const Dashboard = () => {
   };
 
   const handleQuitarAccesoVendedor = async (id) => {
-    if(!window.confirm('🚨 ¿Quitar acceso a este vendedor permanentemente?')) return;
+    if(!window.confirm('¿Quitar acceso a este vendedor permanentemente?')) return;
     await fetch(`https://perfumeria-final-b.onrender.com/usuarios/${id}`, { method: 'DELETE' });
     cargarDatos();
   };
 
+  const handleEliminarVentaSola = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar ESTA venta? El stock gastado se devolverá al inventario automáticamente.')) return;
+
+    const res = await fetch(`https://perfumeria-final-b.onrender.com/ventas/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      alert('Venta eliminada y stock devuelto.');
+      cargarDatos(); 
+    } else {
+      alert('Error al intentar borrar la venta.');
+    }
+  };
+
   const handleBorrarHistorialVentas = async () => {
-    const seguro = window.confirm('🚨 ADVERTENCIA: Estás a punto de BORRAR TODAS LAS VENTAS del sistema permanentemente. ¿Estás absolutamente seguro?');
+    const seguro = window.confirm('ADVERTENCIA: Estás a punto de BORRAR TODAS LAS VENTAS del sistema permanentemente. ¿Estás absolutamente seguro?');
     if (!seguro) return;
 
     const res = await fetch('https://perfumeria-final-b.onrender.com/ventas', { method: 'DELETE' });
@@ -126,8 +142,46 @@ const Dashboard = () => {
     }
   };
 
+  const handleCambiarPassword = async (e) => {
+    e.preventDefault();
+    setPassStatus({ loading: true, error: '', success: '' });
+
+    if (passData.nueva !== passData.confirmar) {
+      return setPassStatus({ loading: false, error: 'Las contraseñas nuevas no coinciden.', success: '' });
+    }
+    if (passData.nueva.length < 6) {
+      return setPassStatus({ loading: false, error: 'La contraseña debe tener al menos 6 caracteres.', success: '' });
+    }
+
+    try {
+      const res = await fetch('https://perfumeria-final-b.onrender.com/usuarios/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuario_id: localStorage.getItem('userId'),
+          password_actual: passData.actual,
+          password_nueva: passData.nueva
+        })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setPassStatus({ loading: false, error: '', success: '¡Contraseña actualizada con éxito!' });
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPassData({ actual: '', nueva: '', confirmar: '' });
+          setPassStatus({ loading: false, error: '', success: '' });
+        }, 2000);
+      } else {
+        setPassStatus({ loading: false, error: data.error, success: '' });
+      }
+    } catch (err) {
+      setPassStatus({ loading: false, error: 'Error de conexión con el servidor.', success: '' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-michova-black text-white font-sans" translate="no">
+    <div className="min-h-screen bg-michova-black text-white font-sans relative" translate="no">
       <header className="bg-[#0a0a0a] border-b border-[#333] p-4 sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div>
@@ -136,13 +190,22 @@ const Dashboard = () => {
               Hola, {localStorage.getItem('userName')}
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             <button 
               onClick={() => window.open('https://perfumeria-final-b.onrender.com/reporte-excel', '_blank')} 
               className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors"
             >
-              <span>📊</span> Descargar Excel
+              Descargar Excel
             </button>
+
+            <button 
+              onClick={() => setShowPasswordModal(true)} 
+              className="text-gray-400 hover:text-white px-2 py-2 rounded text-sm font-bold transition-colors flex items-center gap-1"
+              title="Cambiar Contraseña"
+            >
+              Mi Cuenta
+            </button>
+
             <button 
               onClick={() => { localStorage.clear(); navigate('/'); }} 
               className="border border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded text-sm font-bold transition-colors"
@@ -226,7 +289,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
             <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
               <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">
-                {editandoId ? '✏️ Editar Fragancia' : '➕ Registrar Fragancia'}
+                {editandoId ? 'Editar Fragancia' : 'Registrar Fragancia'}
               </h2>
               <form onSubmit={handleGuardarPerfume} className="space-y-4">
                 <div>
@@ -302,18 +365,18 @@ const Dashboard = () => {
                 onClick={handleBorrarHistorialVentas}
                 className="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 px-4 py-2 rounded text-xs font-bold uppercase transition-colors"
               >
-                🗑️ Borrar Historial
+                Borrar Todo El Historial
               </button>
             </div>
             <div className="overflow-x-auto max-h-[700px]">
               <table className="w-full text-left text-sm">
-                <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0">
+                <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0 z-10">
                   <tr>
                     <th className="p-4 font-bold uppercase tracking-wider">Fecha / Hora</th>
                     <th className="p-4 font-bold uppercase tracking-wider">Vendedor</th>
-                    <th className="p-4 font-bold uppercase tracking-wider">Detalle de Preparación</th>
+                    <th className="p-4 font-bold uppercase tracking-wider">Detalle</th>
                     <th className="p-4 font-bold uppercase tracking-wider">Pago</th>
-                    <th className="p-4 font-bold uppercase tracking-wider text-right">Total</th>
+                    <th className="p-4 font-bold uppercase tracking-wider text-right">Total / Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#222]">
@@ -332,10 +395,18 @@ const Dashboard = () => {
                         </td>
                         <td className="p-4">
                           <p className="font-bold text-white">{detalle?.fragancias?.nombre}</p>
-                          <p className="text-xs text-gray-500">{detalle?.tamaño_ml}ml • Frasco {detalle?.tipo_frasco}</p>
+                          <p className="text-xs text-gray-500">{detalle?.tamaño_ml}ml - Frasco {detalle?.tipo_frasco}</p>
                         </td>
                         <td className="p-4 text-gray-300">{v.metodo_pago}</td>
-                        <td className="p-4 text-right font-bold text-michova-gold text-lg">Bs. {v.total}</td>
+                        <td className="p-4 text-right flex flex-col items-end gap-2">
+                          <span className="font-bold text-michova-gold text-lg">Bs. {v.total}</span>
+                          <button 
+                            onClick={() => handleEliminarVentaSola(v.id)} 
+                            className="text-xs text-red-500 hover:text-red-400 uppercase font-bold transition-colors"
+                          >
+                            Anular Venta
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -388,10 +459,10 @@ const Dashboard = () => {
                     
                     <button 
                       onClick={() => handleQuitarAccesoVendedor(v.id)}
-                      className="bg-[#222] group-hover:bg-red-900 group-hover:text-white text-gray-500 p-3 rounded-full transition-colors"
+                      className="bg-[#222] group-hover:bg-red-900 group-hover:text-white text-gray-500 px-3 py-1 rounded font-bold transition-colors uppercase text-xs"
                       title="Revocar Acceso"
                     >
-                      
+                      Revocar
                     </button>
                   </div>
                 ))}
@@ -400,8 +471,46 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-
       </div>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-[#333] rounded-lg p-8 max-w-md w-full shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center border-b border-[#333] pb-4 mb-6">
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider">Cambiar Contraseña</h2>
+              <button onClick={() => setShowPasswordModal(false)} className="text-gray-500 hover:text-white text-xl font-bold">X</button>
+            </div>
+            
+            <form onSubmit={handleCambiarPassword} className="space-y-4">
+              {passStatus.error && <div className="bg-red-900/50 border border-red-500 text-red-200 text-sm p-3 rounded">{passStatus.error}</div>}
+              {passStatus.success && <div className="bg-green-900/50 border border-green-500 text-green-200 text-sm p-3 rounded">{passStatus.success}</div>}
+              
+              <div>
+                <label className="text-xs text-gray-400 font-bold uppercase block mb-1">Contraseña Actual</label>
+                <input type="password" required value={passData.actual} onChange={e => setPassData({...passData, actual: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 font-bold uppercase block mb-1">Nueva Contraseña</label>
+                <input type="password" required value={passData.nueva} onChange={e => setPassData({...passData, nueva: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 font-bold uppercase block mb-1">Confirmar Nueva Contraseña</label>
+                <input type="password" required value={passData.confirmar} onChange={e => setPassData({...passData, confirmar: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="submit" disabled={passStatus.loading} className="flex-1 bg-michova-gold text-michova-black font-bold py-3 rounded uppercase text-sm hover:bg-yellow-400 transition-colors disabled:opacity-50">
+                  {passStatus.loading ? 'Guardando...' : 'Actualizar'}
+                </button>
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="bg-[#333] text-white px-6 rounded font-bold uppercase text-sm hover:bg-[#444] transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

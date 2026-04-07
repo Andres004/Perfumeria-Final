@@ -19,7 +19,7 @@ const supabase = createClient(
 );
 
 app.get('/', (req, res) => {
-  res.send('Servidor MICHOVA funcionando 🚀');
+  res.send('Servidor MICHOVA funcionando');
 });
 
 // ==========================================
@@ -60,7 +60,7 @@ app.post('/usuarios', async (req, res) => {
   res.json({ mensaje: 'Usuario registrado exitosamente', data });
 });
 
-// NUEVO: Cambiar contraseña (Vendedor o Admin)
+// Cambiar contraseña (Vendedor o Admin)
 app.put('/usuarios/password', async (req, res) => {
   const { usuario_id, password_actual, password_nueva } = req.body;
 
@@ -104,7 +104,7 @@ app.delete('/usuarios/:id', async (req, res) => {
 app.get('/fragancias', async (req, res) => {
   const { data, error } = await supabase
     .from('fragancias')
-    .select('id, nombre, stock_ml, stock_minimo') // Quitamos precio_por_ml
+    .select('id, nombre, stock_ml, stock_minimo')
     .order('nombre', { ascending: true });
 
   if (error) return res.status(400).json({ error: error.message });
@@ -115,7 +115,6 @@ app.post('/fragancias', async (req, res) => {
   const { nombre, stock_ml, stock_minimo } = req.body;
   const { data, error } = await supabase
     .from('fragancias')
-    // Mandamos precio_por_ml como 0 siempre para cumplir con la BD
     .insert([{ nombre, precio_por_ml: 0, stock_ml, stock_minimo }]) 
     .select();
 
@@ -220,8 +219,8 @@ app.post('/ventas', async (req, res) => {
         body: JSON.stringify(datosParaExcel)
       })
       .then(res => res.text())
-      .then(texto => console.log("✅ Google Respondió:", texto))
-      .catch(err => console.error("❌ Error de red hacia Google:", err));
+      .then(texto => console.log("Google Respondió:", texto))
+      .catch(err => console.error("Error de red hacia Google:", err));
 
     } catch (errorExcel) {
       console.error("Fallo excel:", errorExcel);
@@ -234,7 +233,42 @@ app.post('/ventas', async (req, res) => {
   }
 });
 
-// Borrar Historial de Ventas
+// Eliminar UNA SOLA venta y devolver el stock
+app.delete('/ventas/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data: detalle } = await supabase
+      .from('detalle_ventas')
+      .select('fragancia_id, tamaño_ml')
+      .eq('venta_id', id)
+      .single();
+
+    if (detalle) {
+      const { data: fragancia } = await supabase
+        .from('fragancias')
+        .select('stock_ml')
+        .eq('id', detalle.fragancia_id)
+        .single();
+
+      if (fragancia) {
+        await supabase
+          .from('fragancias')
+          .update({ stock_ml: fragancia.stock_ml + detalle.tamaño_ml })
+          .eq('id', detalle.fragancia_id);
+      }
+    }
+
+    const { error } = await supabase.from('ventas').delete().eq('id', id);
+    if (error) throw error;
+    
+    res.json({ mensaje: 'Venta eliminada y stock devuelto al inventario' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Borrar Historial de Ventas Completo
 app.delete('/ventas', async (req, res) => {
   const { error } = await supabase.from('ventas').delete().neq('metodo_pago', 'ESTE_PAGO_NO_EXISTE');
   if (error) return res.status(400).json({ error: error.message });
