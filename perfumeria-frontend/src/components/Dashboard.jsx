@@ -105,15 +105,25 @@ const Dashboard = () => {
     const url = editandoFrascoId ? `https://perfumeria-final-b.onrender.com/frascos/${editandoFrascoId}` : 'https://perfumeria-final-b.onrender.com/frascos';
     const method = editandoFrascoId ? 'PUT' : 'POST';
 
-    await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(nuevoFrasco)
-    });
-    
-    setNuevoFrasco({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
-    setEditandoFrascoId(null);
-    cargarDatos();
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoFrasco)
+      });
+      
+      const data = await res.json();
+
+      if (res.ok) {
+        setNuevoFrasco({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
+        setEditandoFrascoId(null);
+        cargarDatos();
+      } else {
+        alert(`Error al guardar: ${data.error}`);
+      }
+    } catch (error) {
+      alert("Error de conexion al intentar guardar el frasco.");
+    }
   };
 
   const handleEditarFrasco = (frasco) => {
@@ -329,7 +339,6 @@ const Dashboard = () => {
 
         {activeTab === 'inventario' && (
           <div className="space-y-12 animate-fade-in">
-            {/* SECCION FRAGANCIAS */}
             <div>
               <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">
                 Inventario de Fragancias
@@ -402,7 +411,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* SECCION FRASCOS */}
             <div>
               <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">
                 Inventario de Frascos
@@ -416,7 +424,12 @@ const Dashboard = () => {
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label>
-                        <select required value={nuevoFrasco.capacidad_ml} onChange={e => setNuevoFrasco({...nuevoFrasco, capacidad_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
+                        <select required value={nuevoFrasco.capacidad_ml} onChange={e => {
+                          const cap = Number(e.target.value);
+                          let nuevoTipo = nuevoFrasco.tipo;
+                          if ((cap === 5 || cap === 10) && nuevoTipo === 'Premium') nuevoTipo = 'Estandar';
+                          setNuevoFrasco({...nuevoFrasco, capacidad_ml: cap, tipo: nuevoTipo});
+                        }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
                           <option value="">Seleccionar</option>
                           <option value="5">5 ml</option>
                           <option value="10">10 ml</option>
@@ -429,7 +442,7 @@ const Dashboard = () => {
                         <label className="text-xs text-gray-400 font-bold uppercase">Tipo</label>
                         <select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
                           <option value="Estandar">Estandar</option>
-                          <option value="Premium">Premium</option>
+                          <option value="Premium" disabled={nuevoFrasco.capacidad_ml === 5 || nuevoFrasco.capacidad_ml === 10}>Premium</option>
                         </select>
                       </div>
                     </div>
