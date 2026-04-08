@@ -442,7 +442,9 @@ const Dashboard = () => {
                         <label className="text-xs text-gray-400 font-bold uppercase">Tipo</label>
                         <select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
                           <option value="Estandar">Estandar</option>
-                          <option value="Premium" disabled={nuevoFrasco.capacidad_ml === 5 || nuevoFrasco.capacidad_ml === 10}>Premium</option>
+                          {nuevoFrasco.capacidad_ml !== 5 && nuevoFrasco.capacidad_ml !== 10 && (
+                            <option value="Premium">Premium</option>
+                          )}
                         </select>
                       </div>
                     </div>
@@ -612,7 +614,6 @@ const Dashboard = () => {
                     <button 
                       onClick={() => handleQuitarAccesoVendedor(v.id)}
                       className="bg-[#222] group-hover:bg-red-900 group-hover:text-white text-gray-500 px-3 py-1 rounded font-bold transition-colors uppercase text-xs"
-                      title="Revocar Acceso"
                     >
                       Revocar
                     </button>
