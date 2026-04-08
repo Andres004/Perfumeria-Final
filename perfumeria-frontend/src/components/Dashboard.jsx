@@ -15,6 +15,7 @@ const Dashboard = () => {
   
   const [nuevoPerfume, setNuevoPerfume] = useState({ nombre: '', stock_ml: '', stock_minimo: '' });
   const [editandoId, setEditandoId] = useState(null);
+  const [busquedaInventario, setBusquedaInventario] = useState('');
 
   const [nuevoFrasco, setNuevoFrasco] = useState({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
   const [editandoFrascoId, setEditandoFrascoId] = useState(null);
@@ -33,7 +34,13 @@ const Dashboard = () => {
         fetch('https://perfumeria-final-b.onrender.com/usuarios'),
         fetch('https://perfumeria-final-b.onrender.com/frascos')
       ]);
-      setInventario(await resFragancias.json());
+
+      const dataFragancias = await resFragancias.json();
+      
+      // Ordenamiento alfanumerico natural (H1, H2, H10, M1...)
+      dataFragancias.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
+      
+      setInventario(dataFragancias);
       setVentas(await resVentas.json());
       setVendedores(await resVendedores.json());
       setFrascos(await resFrascos.json());
@@ -233,6 +240,10 @@ const Dashboard = () => {
   const alertasFragancias = inventario.filter(i => i.stock_ml <= i.stock_minimo).length;
   const alertasFrascos = frascos.filter(f => f.stock <= f.stock_minimo).length;
 
+  const inventarioFiltrado = inventario.filter(item => 
+    item.nombre.toLowerCase().includes(busquedaInventario.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-michova-black text-white font-sans relative" translate="no">
       <header className="bg-[#0a0a0a] border-b border-[#333] p-4 sticky top-0 z-10 shadow-lg">
@@ -377,8 +388,15 @@ const Dashboard = () => {
                 </div>
 
                 <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
-                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
+                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a] flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Fragancias</h2>
+                    <input 
+                      type="text" 
+                      placeholder="Buscar fragancia..." 
+                      value={busquedaInventario} 
+                      onChange={(e) => setBusquedaInventario(e.target.value)} 
+                      className="bg-[#1a1a1a] border border-[#333] text-white px-4 py-2 rounded text-sm focus:border-michova-gold outline-none w-full md:w-64 transition-colors"
+                    />
                   </div>
                   <div className="overflow-x-auto max-h-[400px]">
                     <table className="w-full text-left text-sm">
@@ -390,7 +408,7 @@ const Dashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#222]">
-                        {inventario.map(item => (
+                        {inventarioFiltrado.map(item => (
                           <tr key={item.id} className="hover:bg-[#1a1a1a] transition-colors">
                             <td className="p-4 font-bold text-white">{item.nombre}</td>
                             <td className="p-4">
@@ -404,6 +422,9 @@ const Dashboard = () => {
                             </td>
                           </tr>
                         ))}
+                        {inventarioFiltrado.length === 0 && (
+                          <tr><td colSpan="3" className="p-6 text-center text-gray-500 italic">No se encontraron resultados para la busqueda.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -614,6 +635,7 @@ const Dashboard = () => {
                     <button 
                       onClick={() => handleQuitarAccesoVendedor(v.id)}
                       className="bg-[#222] group-hover:bg-red-900 group-hover:text-white text-gray-500 px-3 py-1 rounded font-bold transition-colors uppercase text-xs"
+                      title="Revocar Acceso"
                     >
                       Revocar
                     </button>

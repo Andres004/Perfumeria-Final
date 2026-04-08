@@ -201,7 +201,6 @@ app.post('/ventas', async (req, res) => {
   const { usuario_id, fragancia_id, tamaño_ml, tipo_frasco, metodo_pago, total_calculado } = req.body;
 
   try {
-    // 1. Verificar stock de fragancia
     const { data: fragancia, error: errorBusqueda } = await supabase
       .from('fragancias')
       .select('stock_ml, nombre')
@@ -213,19 +212,21 @@ app.post('/ventas', async (req, res) => {
       return res.status(400).json({ error: 'Stock insuficiente de fragancia' });
     }
 
-    // 2. Verificar stock del frasco específico
-    const { data: frasco, error: errorFrasco } = await supabase
-      .from('frascos')
-      .select('id, stock')
-      .eq('capacidad_ml', tamaño_ml)
-      .eq('tipo', tipo_frasco)
-      .single();
+    let frasco = null;
+    if (tipo_frasco !== 'Recarga') {
+      const { data: frascoData, error: errorFrasco } = await supabase
+        .from('frascos')
+        .select('id, stock')
+        .eq('capacidad_ml', tamaño_ml)
+        .eq('tipo', tipo_frasco)
+        .single();
 
-    if (errorFrasco || !frasco || frasco.stock < 1) {
-      return res.status(400).json({ error: `Stock insuficiente de frasco ${tamaño_ml}ml ${tipo_frasco}` });
+      if (errorFrasco || !frascoData || frascoData.stock < 1) {
+        return res.status(400).json({ error: `Stock insuficiente de frasco ${tamaño_ml}ml ${tipo_frasco}` });
+      }
+      frasco = frascoData;
     }
 
-    // 3. Registrar la venta
     const { data: nuevaVenta, error: errorVenta } = await supabase
       .from('ventas')
       .insert([{ usuario_id, total: total_calculado, metodo_pago }])
@@ -241,22 +242,22 @@ app.post('/ventas', async (req, res) => {
         fragancia_id,
         tamaño_ml,
         tipo_frasco,
-        precio_frasco: tipo_frasco === 'Premium' ? 50 : 15 
+        precio_frasco: tipo_frasco === 'Premium' ? 50 : (tipo_frasco === 'Recarga' ? 0 : 15)
       }]);
 
     if (errorDetalle) throw errorDetalle;
 
-    // 4. Descontar ml de fragancia
     await supabase
       .from('fragancias')
       .update({ stock_ml: fragancia.stock_ml - tamaño_ml })
       .eq('id', fragancia_id);
 
-    // 5. Descontar 1 unidad del frasco
-    await supabase
-      .from('frascos')
-      .update({ stock: frasco.stock - 1 })
-      .eq('id', frasco.id);
+    if (tipo_frasco !== 'Recarga' && frasco) {
+      await supabase
+        .from('frascos')
+        .update({ stock: frasco.stock - 1 })
+        .eq('id', frasco.id);
+    }
 
     try {
       const { data: usuarioData } = await supabase
@@ -312,7 +313,6 @@ app.delete('/ventas/:id', async (req, res) => {
       .single();
 
     if (detalle) {
-      // Devolver ml a la fragancia
       const { data: fragancia } = await supabase
         .from('fragancias')
         .select('stock_ml')
@@ -326,19 +326,20 @@ app.delete('/ventas/:id', async (req, res) => {
           .eq('id', detalle.fragancia_id);
       }
 
-      // Devolver 1 unidad al frasco
-      const { data: frasco } = await supabase
-        .from('frascos')
-        .select('id, stock')
-        .eq('capacidad_ml', detalle.tamaño_ml)
-        .eq('tipo', detalle.tipo_frasco)
-        .single();
-
-      if (frasco) {
-        await supabase
+      if (detalle.tipo_frasco !== 'Recarga') {
+        const { data: frasco } = await supabase
           .from('frascos')
-          .update({ stock: frasco.stock + 1 })
-          .eq('id', frasco.id);
+          .select('id, stock')
+          .eq('capacidad_ml', detalle.tamaño_ml)
+          .eq('tipo', detalle.tipo_frasco)
+          .single();
+
+        if (frasco) {
+          await supabase
+            .from('frascos')
+            .update({ stock: frasco.stock + 1 })
+            .eq('id', frasco.id);
+        }
       }
     }
 
