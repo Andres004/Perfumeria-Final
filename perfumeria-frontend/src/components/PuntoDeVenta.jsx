@@ -105,7 +105,7 @@ const PuntoDeVenta = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert(`¡Venta Registrada Correctamente!\nTotal Cobrado: Bs. ${totalCobro}`);
+        alert(`Venta Registrada Correctamente.\nTotal Cobrado: Bs. ${totalCobro}`);
         setFraganciaBuscada(''); setTamano(30); setTipoFrasco('Estandar'); setIsRecarga(false);
         setFeromonas(0); setFijador(0); setElixir(false); setDescuentoManual(0); setMetodoPago('Efectivo');
       } else {
@@ -196,7 +196,7 @@ const PuntoDeVenta = () => {
                 value={fraganciaBuscada} 
                 onChange={(e) => { setFraganciaBuscada(e.target.value); setShowDropdown(true); }} 
                 onFocus={() => setShowDropdown(true)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                onBlur={() => setShowDropdown(false)}
                 className="w-full bg-[#1a1a1a] border border-[#333] rounded p-4 text-white focus:border-michova-gold outline-none" 
                 required 
                 autoComplete="off"
@@ -207,7 +207,7 @@ const PuntoDeVenta = () => {
                     <li 
                       key={b.id} 
                       className="p-4 hover:bg-[#333] cursor-pointer text-white font-medium hover:text-michova-gold transition-colors border-b border-[#222]" 
-                      onClick={() => { setFraganciaBuscada(b.nombre); setShowDropdown(false); }}
+                      onMouseDown={() => { setFraganciaBuscada(b.nombre); setShowDropdown(false); }}
                     >
                       {b.nombre}
                     </li>
