@@ -60,7 +60,6 @@ app.post('/usuarios', async (req, res) => {
   res.json({ mensaje: 'Usuario registrado exitosamente', data });
 });
 
-// Cambiar contraseña (Vendedor o Admin)
 app.put('/usuarios/password', async (req, res) => {
   const { usuario_id, password_actual, password_nueva } = req.body;
 
@@ -89,7 +88,6 @@ app.put('/usuarios/password', async (req, res) => {
   }
 });
 
-// Eliminar Vendedor
 app.delete('/usuarios/:id', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('usuarios').delete().eq('id', id);
@@ -98,7 +96,7 @@ app.delete('/usuarios/:id', async (req, res) => {
 });
 
 // ==========================================
-// 2. GESTIÓN DE FRAGANCIAS (INVENTARIO)
+// 2. GESTIÓN DE FRAGANCIAS
 // ==========================================
 
 app.get('/fragancias', async (req, res) => {
@@ -147,13 +145,63 @@ app.delete('/fragancias/:id', async (req, res) => {
 });
 
 // ==========================================
-// 3. REGISTRO DE VENTAS (Y GOOGLE SHEETS)
+// 3. GESTIÓN DE FRASCOS (INVENTARIO FÍSICO)
+// ==========================================
+
+app.get('/frascos', async (req, res) => {
+  const { data, error } = await supabase
+    .from('frascos')
+    .select('*')
+    .order('capacidad_ml', { ascending: true });
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/frascos', async (req, res) => {
+  const { capacidad_ml, tipo, stock, stock_minimo } = req.body;
+  const { data, error } = await supabase
+    .from('frascos')
+    .insert([{ capacidad_ml, tipo, stock, stock_minimo }])
+    .select();
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ mensaje: 'Frasco agregado', data });
+});
+
+app.put('/frascos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { capacidad_ml, tipo, stock, stock_minimo } = req.body;
+  const { data, error } = await supabase
+    .from('frascos')
+    .update({ capacidad_ml, tipo, stock, stock_minimo })
+    .eq('id', id)
+    .select();
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ mensaje: 'Frasco actualizado', data });
+});
+
+app.delete('/frascos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase
+    .from('frascos')
+    .delete()
+    .eq('id', id);
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ mensaje: 'Frasco eliminado' });
+});
+
+// ==========================================
+// 4. REGISTRO DE VENTAS (Y GOOGLE SHEETS)
 // ==========================================
 
 app.post('/ventas', async (req, res) => {
   const { usuario_id, fragancia_id, tamaño_ml, tipo_frasco, metodo_pago, total_calculado } = req.body;
 
   try {
+    // 1. Verificar stock de fragancia
     const { data: fragancia, error: errorBusqueda } = await supabase
       .from('fragancias')
       .select('stock_ml, nombre')
@@ -162,9 +210,22 @@ app.post('/ventas', async (req, res) => {
 
     if (errorBusqueda) throw errorBusqueda;
     if (fragancia.stock_ml < tamaño_ml) {
-      return res.status(400).json({ error: 'Stock insuficiente' });
+      return res.status(400).json({ error: 'Stock insuficiente de fragancia' });
     }
 
+    // 2. Verificar stock del frasco específico
+    const { data: frasco, error: errorFrasco } = await supabase
+      .from('frascos')
+      .select('id, stock')
+      .eq('capacidad_ml', tamaño_ml)
+      .eq('tipo', tipo_frasco)
+      .single();
+
+    if (errorFrasco || !frasco || frasco.stock < 1) {
+      return res.status(400).json({ error: `Stock insuficiente de frasco ${tamaño_ml}ml ${tipo_frasco}` });
+    }
+
+    // 3. Registrar la venta
     const { data: nuevaVenta, error: errorVenta } = await supabase
       .from('ventas')
       .insert([{ usuario_id, total: total_calculado, metodo_pago }])
@@ -185,10 +246,17 @@ app.post('/ventas', async (req, res) => {
 
     if (errorDetalle) throw errorDetalle;
 
+    // 4. Descontar ml de fragancia
     await supabase
       .from('fragancias')
       .update({ stock_ml: fragancia.stock_ml - tamaño_ml })
       .eq('id', fragancia_id);
+
+    // 5. Descontar 1 unidad del frasco
+    await supabase
+      .from('frascos')
+      .update({ stock: frasco.stock - 1 })
+      .eq('id', frasco.id);
 
     try {
       const { data: usuarioData } = await supabase
@@ -233,18 +301,18 @@ app.post('/ventas', async (req, res) => {
   }
 });
 
-// Eliminar UNA SOLA venta y devolver el stock
 app.delete('/ventas/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
     const { data: detalle } = await supabase
       .from('detalle_ventas')
-      .select('fragancia_id, tamaño_ml')
+      .select('fragancia_id, tamaño_ml, tipo_frasco')
       .eq('venta_id', id)
       .single();
 
     if (detalle) {
+      // Devolver ml a la fragancia
       const { data: fragancia } = await supabase
         .from('fragancias')
         .select('stock_ml')
@@ -257,6 +325,21 @@ app.delete('/ventas/:id', async (req, res) => {
           .update({ stock_ml: fragancia.stock_ml + detalle.tamaño_ml })
           .eq('id', detalle.fragancia_id);
       }
+
+      // Devolver 1 unidad al frasco
+      const { data: frasco } = await supabase
+        .from('frascos')
+        .select('id, stock')
+        .eq('capacidad_ml', detalle.tamaño_ml)
+        .eq('tipo', detalle.tipo_frasco)
+        .single();
+
+      if (frasco) {
+        await supabase
+          .from('frascos')
+          .update({ stock: frasco.stock + 1 })
+          .eq('id', frasco.id);
+      }
     }
 
     const { error } = await supabase.from('ventas').delete().eq('id', id);
@@ -268,7 +351,6 @@ app.delete('/ventas/:id', async (req, res) => {
   }
 });
 
-// Borrar Historial de Ventas Completo
 app.delete('/ventas', async (req, res) => {
   const { error } = await supabase.from('ventas').delete().neq('metodo_pago', 'ESTE_PAGO_NO_EXISTE');
   if (error) return res.status(400).json({ error: error.message });
@@ -276,7 +358,7 @@ app.delete('/ventas', async (req, res) => {
 });
 
 // ==========================================
-// 4. REPORTES Y DASHBOARD
+// 5. REPORTES Y DASHBOARD
 // ==========================================
 
 app.get('/ventas', async (req, res) => {
@@ -288,16 +370,6 @@ app.get('/ventas', async (req, res) => {
       detalle_ventas ( tamaño_ml, tipo_frasco, fragancias ( nombre ) )
     `)
     .order('fecha_hora', { ascending: false });
-
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
-});
-
-app.get('/alertas', async (req, res) => {
-  const { data, error } = await supabase
-    .from('fragancias')
-    .select('nombre, stock_ml, stock_minimo')
-    .lte('stock_ml', 'stock_minimo');
 
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);

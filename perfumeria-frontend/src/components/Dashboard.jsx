@@ -7,6 +7,7 @@ const Dashboard = () => {
   
   const [activeTab, setActiveTab] = useState('resumen');
   const [inventario, setInventario] = useState([]);
+  const [frascos, setFrascos] = useState([]);
   const [ventas, setVentas] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   
@@ -14,6 +15,10 @@ const Dashboard = () => {
   
   const [nuevoPerfume, setNuevoPerfume] = useState({ nombre: '', stock_ml: '', stock_minimo: '' });
   const [editandoId, setEditandoId] = useState(null);
+
+  const [nuevoFrasco, setNuevoFrasco] = useState({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
+  const [editandoFrascoId, setEditandoFrascoId] = useState(null);
+
   const [nuevoVendedor, setNuevoVendedor] = useState({ nombre: '', email: '', password: '' });
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -22,14 +27,16 @@ const Dashboard = () => {
 
   const cargarDatos = async () => {
     try {
-      const [resFragancias, resVentas, resVendedores] = await Promise.all([
+      const [resFragancias, resVentas, resVendedores, resFrascos] = await Promise.all([
         fetch('https://perfumeria-final-b.onrender.com/fragancias'),
         fetch('https://perfumeria-final-b.onrender.com/ventas'),
-        fetch('https://perfumeria-final-b.onrender.com/usuarios')
+        fetch('https://perfumeria-final-b.onrender.com/usuarios'),
+        fetch('https://perfumeria-final-b.onrender.com/frascos')
       ]);
       setInventario(await resFragancias.json());
       setVentas(await resVentas.json());
       setVendedores(await resVendedores.json());
+      setFrascos(await resFrascos.json());
     } catch (error) {
       console.error("Error al cargar el dashboard", error);
     }
@@ -88,8 +95,41 @@ const Dashboard = () => {
   };
 
   const handleEliminarPerfume = async (id) => {
-    if(!window.confirm('¿Estás seguro de eliminar esta fragancia del sistema?')) return;
+    if(!window.confirm('Confirmar eliminacion de fragancia.')) return;
     await fetch(`https://perfumeria-final-b.onrender.com/fragancias/${id}`, { method: 'DELETE' });
+    cargarDatos();
+  };
+
+  const handleGuardarFrasco = async (e) => {
+    e.preventDefault();
+    const url = editandoFrascoId ? `https://perfumeria-final-b.onrender.com/frascos/${editandoFrascoId}` : 'https://perfumeria-final-b.onrender.com/frascos';
+    const method = editandoFrascoId ? 'PUT' : 'POST';
+
+    await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nuevoFrasco)
+    });
+    
+    setNuevoFrasco({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
+    setEditandoFrascoId(null);
+    cargarDatos();
+  };
+
+  const handleEditarFrasco = (frasco) => {
+    setEditandoFrascoId(frasco.id);
+    setNuevoFrasco({
+      capacidad_ml: frasco.capacidad_ml,
+      tipo: frasco.tipo,
+      stock: frasco.stock,
+      stock_minimo: frasco.stock_minimo
+    });
+    setActiveTab('inventario');
+  };
+
+  const handleEliminarFrasco = async (id) => {
+    if(!window.confirm('Confirmar eliminacion de envase.')) return;
+    await fetch(`https://perfumeria-final-b.onrender.com/frascos/${id}`, { method: 'DELETE' });
     cargarDatos();
   };
 
@@ -112,13 +152,13 @@ const Dashboard = () => {
   };
 
   const handleQuitarAccesoVendedor = async (id) => {
-    if(!window.confirm('¿Quitar acceso a este vendedor permanentemente?')) return;
+    if(!window.confirm('Quitar acceso permanentemente a este usuario.')) return;
     await fetch(`https://perfumeria-final-b.onrender.com/usuarios/${id}`, { method: 'DELETE' });
     cargarDatos();
   };
 
   const handleEliminarVentaSola = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar ESTA venta? El stock gastado se devolverá al inventario automáticamente.')) return;
+    if (!window.confirm('Confirmar eliminacion de venta. El stock gastado se devolvera automaticamente.')) return;
 
     const res = await fetch(`https://perfumeria-final-b.onrender.com/ventas/${id}`, { method: 'DELETE' });
     if (res.ok) {
@@ -130,7 +170,7 @@ const Dashboard = () => {
   };
 
   const handleBorrarHistorialVentas = async () => {
-    const seguro = window.confirm('ADVERTENCIA: Estás a punto de BORRAR TODAS LAS VENTAS del sistema permanentemente. ¿Estás absolutamente seguro?');
+    const seguro = window.confirm('ADVERTENCIA: Se borrara todo el historial de ventas.');
     if (!seguro) return;
 
     const res = await fetch('https://perfumeria-final-b.onrender.com/ventas', { method: 'DELETE' });
@@ -166,7 +206,7 @@ const Dashboard = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setPassStatus({ loading: false, error: '', success: '¡Contraseña actualizada con éxito!' });
+        setPassStatus({ loading: false, error: '', success: 'Contraseña actualizada con exito.' });
         setTimeout(() => {
           setShowPasswordModal(false);
           setPassData({ actual: '', nueva: '', confirmar: '' });
@@ -176,9 +216,12 @@ const Dashboard = () => {
         setPassStatus({ loading: false, error: data.error, success: '' });
       }
     } catch (err) {
-      setPassStatus({ loading: false, error: 'Error de conexión con el servidor.', success: '' });
+      setPassStatus({ loading: false, error: 'Error de conexion.', success: '' });
     }
   };
+
+  const alertasFragancias = inventario.filter(i => i.stock_ml <= i.stock_minimo).length;
+  const alertasFrascos = frascos.filter(f => f.stock <= f.stock_minimo).length;
 
   return (
     <div className="min-h-screen bg-michova-black text-white font-sans relative" translate="no">
@@ -201,7 +244,6 @@ const Dashboard = () => {
             <button 
               onClick={() => setShowPasswordModal(true)} 
               className="text-gray-400 hover:text-white px-2 py-2 rounded text-sm font-bold transition-colors flex items-center gap-1"
-              title="Cambiar Contraseña"
             >
               Mi Cuenta
             </button>
@@ -219,10 +261,10 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex gap-2 border-b border-[#333] mb-8 overflow-x-auto">
           {[
-            { id: 'resumen', label: 'Resumen & Gráficos' },
-            { id: 'inventario', label: 'Bodega & Inventario' },
+            { id: 'resumen', label: 'Resumen y Graficos' },
+            { id: 'inventario', label: 'Bodega e Inventario' },
             { id: 'ventas', label: 'Historial de Ventas' },
-            { id: 'vendedores', label: 'Gestión Vendedores' }
+            { id: 'vendedores', label: 'Gestion Vendedores' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -242,13 +284,13 @@ const Dashboard = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-[#111] border border-[#333] p-6 rounded border-l-4 border-l-michova-gold shadow-md">
-                <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Total Recaudado (Histórico)</p>
+                <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Total Recaudado (Historico)</p>
                 <p className="text-3xl font-bold mt-2">Bs. {ventas.reduce((acc, v) => acc + Number(v.total), 0)}</p>
               </div>
               <div className="bg-[#111] border border-[#333] p-6 rounded border-l-4 border-l-red-500 shadow-md">
                 <p className="text-gray-400 text-xs uppercase font-bold tracking-wider">Alertas de Stock</p>
                 <p className="text-3xl font-bold mt-2 text-white">
-                  {inventario.filter(i => i.stock_ml <= i.stock_minimo).length} <span className="text-sm font-normal text-gray-500">críticos</span>
+                  {alertasFragancias + alertasFrascos} <span className="text-sm font-normal text-gray-500">criticos</span>
                 </p>
               </div>
               <div className="bg-[#111] border border-[#333] p-6 rounded border-l-4 border-l-blue-500 shadow-md">
@@ -266,8 +308,8 @@ const Dashboard = () => {
                   className="bg-[#1a1a1a] text-white border border-[#333] p-2 rounded text-sm focus:border-michova-gold outline-none"
                 >
                   <option value="diario">Hoy</option>
-                  <option value="semanal">Últimos 7 Días</option>
-                  <option value="mensual">Último Mes</option>
+                  <option value="semanal">Ultimos 7 Dias</option>
+                  <option value="mensual">Ultimo Mes</option>
                 </select>
               </div>
               <div className="h-80 w-full">
@@ -286,69 +328,166 @@ const Dashboard = () => {
         )}
 
         {activeTab === 'inventario' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
-            <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
-              <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">
-                {editandoId ? 'Editar Fragancia' : 'Registrar Fragancia'}
-              </h2>
-              <form onSubmit={handleGuardarPerfume} className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase">Nombre de Fragancia</label>
-                  <input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+          <div className="space-y-12 animate-fade-in">
+            {/* SECCION FRAGANCIAS */}
+            <div>
+              <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">
+                Inventario de Fragancias
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
+                  <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">
+                    {editandoId ? 'Editar Fragancia' : 'Registrar Fragancia'}
+                  </h2>
+                  <form onSubmit={handleGuardarPerfume} className="space-y-4">
+                    <div>
+                      <label className="text-xs text-gray-400 font-bold uppercase">Nombre de Fragancia</label>
+                      <input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label>
+                        <input type="number" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima (ml)</label>
+                        <input type="number" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">
+                        {editandoId ? 'Actualizar' : 'Guardar'}
+                      </button>
+                      {editandoId && (
+                        <button type="button" onClick={() => { setEditandoId(null); setNuevoPerfume({nombre:'', stock_ml:'', stock_minimo:''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
+                  </form>
                 </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label>
-                    <input type="number" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+
+                <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
+                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
+                    <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Fragancias</h2>
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400 font-bold uppercase">Alerta Mínima (ml)</label>
-                    <input type="number" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                  <div className="overflow-x-auto max-h-[400px]">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0">
+                        <tr>
+                          <th className="p-4 font-bold uppercase tracking-wider">Fragancia</th>
+                          <th className="p-4 font-bold uppercase tracking-wider">Stock Restante</th>
+                          <th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#222]">
+                        {inventario.map(item => (
+                          <tr key={item.id} className="hover:bg-[#1a1a1a] transition-colors">
+                            <td className="p-4 font-bold text-white">{item.nombre}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock_ml <= item.stock_minimo ? 'bg-red-900/50 text-red-400 border border-red-800' : 'text-gray-300'}`}>
+                                {item.stock_ml} ml
+                              </span>
+                            </td>
+                            <td className="p-4 text-right space-x-3">
+                              <button onClick={() => handleEditarPerfume(item)} className="text-blue-400 hover:text-blue-300 uppercase text-xs font-bold">Editar</button>
+                              <button onClick={() => handleEliminarPerfume(item.id)} className="text-red-500 hover:text-red-400 uppercase text-xs font-bold">Borrar</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-                <div className="flex gap-2 pt-4">
-                  <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">
-                    {editandoId ? 'Actualizar' : 'Guardar'}
-                  </button>
-                  {editandoId && (
-                    <button type="button" onClick={() => { setEditandoId(null); setNuevoPerfume({nombre:'', stock_ml:'', stock_minimo:''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">
-                      Cancelar
-                    </button>
-                  )}
-                </div>
-              </form>
+              </div>
             </div>
 
-            <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
-              <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
-                <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual</h2>
-              </div>
-              <div className="overflow-x-auto max-h-[600px]">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0">
-                    <tr>
-                      <th className="p-4 font-bold uppercase tracking-wider">Fragancia</th>
-                      <th className="p-4 font-bold uppercase tracking-wider">Stock Restante</th>
-                      <th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#222]">
-                    {inventario.map(item => (
-                      <tr key={item.id} className="hover:bg-[#1a1a1a] transition-colors">
-                        <td className="p-4 font-bold text-white">{item.nombre}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock_ml <= item.stock_minimo ? 'bg-red-900/50 text-red-400 border border-red-800' : 'text-gray-300'}`}>
-                            {item.stock_ml} ml
-                          </span>
-                        </td>
-                        <td className="p-4 text-right space-x-3">
-                          <button onClick={() => handleEditarPerfume(item)} className="text-blue-400 hover:text-blue-300 uppercase text-xs font-bold">Editar</button>
-                          <button onClick={() => handleEliminarPerfume(item.id)} className="text-red-500 hover:text-red-400 uppercase text-xs font-bold">Borrar</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* SECCION FRASCOS */}
+            <div>
+              <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">
+                Inventario de Frascos
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
+                  <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">
+                    {editandoFrascoId ? 'Editar Envase' : 'Registrar Envase'}
+                  </h2>
+                  <form onSubmit={handleGuardarFrasco} className="space-y-4">
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label>
+                        <select required value={nuevoFrasco.capacidad_ml} onChange={e => setNuevoFrasco({...nuevoFrasco, capacidad_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
+                          <option value="">Seleccionar</option>
+                          <option value="5">5 ml</option>
+                          <option value="10">10 ml</option>
+                          <option value="30">30 ml</option>
+                          <option value="50">50 ml</option>
+                          <option value="100">100 ml</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Tipo</label>
+                        <select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
+                          <option value="Estandar">Estandar</option>
+                          <option value="Premium">Premium</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label>
+                        <input type="number" required value={nuevoFrasco.stock} onChange={e => setNuevoFrasco({...nuevoFrasco, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label>
+                        <input type="number" required value={nuevoFrasco.stock_minimo} onChange={e => setNuevoFrasco({...nuevoFrasco, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">
+                        {editandoFrascoId ? 'Actualizar' : 'Guardar'}
+                      </button>
+                      {editandoFrascoId && (
+                        <button type="button" onClick={() => { setEditandoFrascoId(null); setNuevoFrasco({capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
+                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
+                    <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Frascos</h2>
+                  </div>
+                  <div className="overflow-x-auto max-h-[400px]">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0">
+                        <tr>
+                          <th className="p-4 font-bold uppercase tracking-wider">Envase</th>
+                          <th className="p-4 font-bold uppercase tracking-wider">Stock Restante</th>
+                          <th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#222]">
+                        {frascos.map(item => (
+                          <tr key={item.id} className="hover:bg-[#1a1a1a] transition-colors">
+                            <td className="p-4 font-bold text-white">{item.capacidad_ml} ml - {item.tipo}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock <= item.stock_minimo ? 'bg-red-900/50 text-red-400 border border-red-800' : 'text-gray-300'}`}>
+                                {item.stock} unidades
+                              </span>
+                            </td>
+                            <td className="p-4 text-right space-x-3">
+                              <button onClick={() => handleEditarFrasco(item)} className="text-blue-400 hover:text-blue-300 uppercase text-xs font-bold">Editar</button>
+                              <button onClick={() => handleEliminarFrasco(item.id)} className="text-red-500 hover:text-red-400 uppercase text-xs font-bold">Borrar</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -376,7 +515,7 @@ const Dashboard = () => {
                     <th className="p-4 font-bold uppercase tracking-wider">Vendedor</th>
                     <th className="p-4 font-bold uppercase tracking-wider">Detalle</th>
                     <th className="p-4 font-bold uppercase tracking-wider">Pago</th>
-                    <th className="p-4 font-bold uppercase tracking-wider text-right">Total / Acción</th>
+                    <th className="p-4 font-bold uppercase tracking-wider text-right">Total / Accion</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#222]">
@@ -466,7 +605,7 @@ const Dashboard = () => {
                     </button>
                   </div>
                 ))}
-                {vendedores.length === 0 && <p className="text-gray-500 italic p-4">No hay vendedores registrados aún.</p>}
+                {vendedores.length === 0 && <p className="text-gray-500 italic p-4">No hay vendedores registrados aun.</p>}
               </div>
             </div>
           </div>
