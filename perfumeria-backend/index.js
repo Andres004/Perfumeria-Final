@@ -81,10 +81,9 @@ app.delete('/usuarios/:id', async (req, res) => {
 });
 
 // ==========================================
-// 2. GESTIÓN DE INVENTARIOS (FRAGANCIAS, FRASCOS, PRODUCTOS)
+// 2. GESTIÓN DE INVENTARIOS
 // ==========================================
 
-// Fragancias
 app.get('/fragancias', async (req, res) => {
   const { data, error } = await supabase
     .from('fragancias')
@@ -123,7 +122,6 @@ app.delete('/fragancias/:id', async (req, res) => {
   res.json({ mensaje: 'Fragancia eliminada' });
 });
 
-// Frascos
 app.get('/frascos', async (req, res) => {
   const { data, error } = await supabase.from('frascos').select('*').order('capacidad_ml', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
@@ -152,7 +150,6 @@ app.delete('/frascos/:id', async (req, res) => {
   res.json({ mensaje: 'Frasco eliminado' });
 });
 
-// Productos Varios
 app.get('/productos', async (req, res) => {
   const { data, error } = await supabase.from('productos').select('*').order('nombre', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
@@ -193,7 +190,6 @@ app.post('/ventas', async (req, res) => {
     let tamanoParaExcel = '';
     let frascoParaExcel = '';
 
-    // LOGICA POR TIPO DE VENTA
     if (tipo_venta === 'perfume' || tipo_venta === 'esencia') {
       const { data: fragancia, error: errFrag } = await supabase.from('fragancias').select('stock_ml, nombre').eq('id', fragancia_id).single();
       if (errFrag || fragancia.stock_ml < tamaño_ml) return res.status(400).json({ error: 'Stock insuficiente de fragancia' });
@@ -209,7 +205,6 @@ app.post('/ventas', async (req, res) => {
         frasco = frascoData;
       }
 
-      // Descontar inventarios
       await supabase.from('fragancias').update({ stock_ml: fragancia.stock_ml - tamaño_ml }).eq('id', fragancia_id);
       if (frasco) {
         await supabase.from('frascos').update({ stock: frasco.stock - 1 }).eq('id', frasco.id);
@@ -226,27 +221,26 @@ app.post('/ventas', async (req, res) => {
       await supabase.from('productos').update({ stock: producto.stock - cantidad }).eq('id', producto_id);
     }
 
-    // REGISTRO DE LA VENTA
     const { data: nuevaVenta, error: errorVenta } = await supabase
       .from('ventas').insert([{ usuario_id, total: total_calculado, metodo_pago }]).select().single();
     if (errorVenta) throw errorVenta;
 
-    // REGISTRO DEL DETALLE
     const detallePayload = { venta_id: nuevaVenta.id };
     if (tipo_venta === 'perfume' || tipo_venta === 'esencia') {
       detallePayload.fragancia_id = fragancia_id;
       detallePayload.tamaño_ml = tamaño_ml;
       detallePayload.tipo_frasco = tipo_venta === 'esencia' ? 'Solo Esencia' : tipo_frasco;
+      detallePayload.precio_frasco = (tipo_venta === 'esencia' || tipo_frasco === 'Recarga') ? 0 : (tipo_frasco === 'Premium' ? 50 : 15);
     } else if (tipo_venta === 'producto') {
       detallePayload.producto_id = producto_id;
       detallePayload.cantidad = cantidad;
       detallePayload.tipo_frasco = 'Producto';
+      detallePayload.precio_frasco = 0;
     }
 
     const { error: errorDetalle } = await supabase.from('detalle_ventas').insert([detallePayload]);
     if (errorDetalle) throw errorDetalle;
 
-    // ENVIAR A GOOGLE SHEETS
     try {
       const { data: usuarioData } = await supabase.from('usuarios').select('nombre').eq('id', usuario_id).single();
       const nombreVendedor = usuarioData ? usuarioData.nombre : 'Admin';
@@ -283,7 +277,6 @@ app.post('/ventas', async (req, res) => {
 
 app.delete('/ventas/:id', async (req, res) => {
   const { id } = req.params;
-
   try {
     const { data: detalle } = await supabase
       .from('detalle_ventas')
@@ -292,7 +285,6 @@ app.delete('/ventas/:id', async (req, res) => {
       .single();
 
     if (detalle) {
-      // Devolver fragancias y frascos
       if (detalle.fragancia_id) {
         const { data: fragancia } = await supabase.from('fragancias').select('stock_ml').eq('id', detalle.fragancia_id).single();
         if (fragancia) {
@@ -305,7 +297,6 @@ app.delete('/ventas/:id', async (req, res) => {
           }
         }
       }
-      // Devolver productos varios
       if (detalle.producto_id) {
         const { data: producto } = await supabase.from('productos').select('stock').eq('id', detalle.producto_id).single();
         if (producto) {
@@ -329,7 +320,7 @@ app.delete('/ventas', async (req, res) => {
 });
 
 // ==========================================
-// 5. REPORTES Y DASHBOARD
+// 4. REPORTES Y DASHBOARD
 // ==========================================
 
 app.get('/ventas', async (req, res) => {
