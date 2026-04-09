@@ -6,10 +6,8 @@ const PuntoDeVenta = () => {
   const [basesDisponibles, setBasesDisponibles] = useState([]);
   const [productosVarios, setProductosVarios] = useState([]);
   
-  // Pestañas de venta: 'perfume', 'esencia', 'producto'
   const [tipoVentaTab, setTipoVentaTab] = useState('perfume');
 
-  // Estados Perfume/Esencia
   const [fraganciaBuscada, setFraganciaBuscada] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -20,11 +18,9 @@ const PuntoDeVenta = () => {
   const [fijador, setFijador] = useState(0); 
   const [elixir, setElixir] = useState(false); 
   
-  // Estados Producto Vario
   const [productoSeleccionadoId, setProductoSeleccionadoId] = useState('');
   const [cantidadProducto, setCantidadProducto] = useState(1);
 
-  // Generales
   const [descuentoManual, setDescuentoManual] = useState(0);
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,12 +36,17 @@ const PuntoDeVenta = () => {
   useEffect(() => {
     fetch('https://perfumeria-final-b.onrender.com/fragancias')
       .then(res => res.json()).then(data => {
-        data.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
-        setBasesDisponibles(data);
+        // Escudo anti-pantalla blanca
+        if (Array.isArray(data)) {
+          data.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
+          setBasesDisponibles(data);
+        } else setBasesDisponibles([]);
       }).catch(err => console.error("Error:", err));
 
     fetch('https://perfumeria-final-b.onrender.com/productos')
-      .then(res => res.json()).then(data => setProductosVarios(data)).catch(err => console.error("Error:", err));
+      .then(res => res.json()).then(data => {
+        setProductosVarios(Array.isArray(data) ? data : []);
+      }).catch(err => console.error("Error:", err));
   }, []);
 
   const handleTamanoChange = (nuevoTamano) => {
@@ -185,7 +186,6 @@ const PuntoDeVenta = () => {
         <div className="bg-[#111] border border-[#333] rounded-lg p-6 shadow-2xl flex flex-col lg:flex-row gap-10">
           <form className="flex-1 space-y-8" onSubmit={handleCobrar}>
             
-            {/* VISTA PERFUME O ESENCIA */}
             {(tipoVentaTab === 'perfume' || tipoVentaTab === 'esencia') && (
               <>
                 <div className="relative" ref={dropdownRef}>
@@ -232,7 +232,6 @@ const PuntoDeVenta = () => {
               </>
             )}
 
-            {/* VISTA PRODUCTO VARIO */}
             {tipoVentaTab === 'producto' && (
               <>
                 <div>
@@ -359,25 +358,6 @@ const PuntoDeVenta = () => {
           </div>
         </div>
       </div>
-
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-[#333] rounded-lg p-8 max-w-md w-full shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-[#333] pb-4 mb-6">
-              <h2 className="text-xl font-bold text-white uppercase tracking-wider">Cambiar Contraseña</h2>
-              <button onClick={() => setShowPasswordModal(false)} className="text-gray-500 hover:text-white text-xl font-bold">X</button>
-            </div>
-            <form onSubmit={handleCambiarPassword} className="space-y-4">
-              {passStatus.error && <div className="bg-red-900/50 border border-red-500 text-red-200 text-sm p-3 rounded">{passStatus.error}</div>}
-              {passStatus.success && <div className="bg-green-900/50 border border-green-500 text-green-200 text-sm p-3 rounded">{passStatus.success}</div>}
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Actual</label><input type="password" required value={passData.actual} onChange={e => setPassData({...passData, actual: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Nueva</label><input type="password" required value={passData.nueva} onChange={e => setPassData({...passData, nueva: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Confirmar</label><input type="password" required value={passData.confirmar} onChange={e => setPassData({...passData, confirmar: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div className="flex gap-3 pt-4"><button type="submit" disabled={passStatus.loading} className="flex-1 bg-michova-gold text-michova-black font-bold py-3 rounded uppercase text-sm hover:bg-yellow-400 transition-colors disabled:opacity-50">Actualizar</button><button type="button" onClick={() => setShowPasswordModal(false)} className="bg-[#333] text-white px-6 rounded font-bold uppercase text-sm hover:bg-[#444] transition-colors">Cancelar</button></div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

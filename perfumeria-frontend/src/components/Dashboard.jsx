@@ -13,7 +13,6 @@ const Dashboard = () => {
   const [filtroTiempo, setFiltroTiempo] = useState('semanal');
   const [busquedaInventario, setBusquedaInventario] = useState('');
 
-  // Estados Formularios
   const [nuevoPerfume, setNuevoPerfume] = useState({ nombre: '', stock_ml: '', stock_minimo: '', precio_por_ml: '' });
   const [editandoId, setEditandoId] = useState(null);
   const [nuevoFrasco, setNuevoFrasco] = useState({ capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: '' });
@@ -34,13 +33,24 @@ const Dashboard = () => {
         fetch('https://perfumeria-final-b.onrender.com/frascos'),
         fetch('https://perfumeria-final-b.onrender.com/productos')
       ]);
+      
       const dataFrag = await resFrag.json();
-      dataFrag.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
-      setInventario(dataFrag);
-      setVentas(await resVentas.json());
-      setVendedores(await resVend.json());
-      setFrascos(await resFrascos.json());
-      setProductos(await resProd.json());
+      const dataVentas = await resVentas.json();
+      const dataVend = await resVend.json();
+      const dataFrascos = await resFrascos.json();
+      const dataProd = await resProd.json();
+
+      // Escudo anti-pantalla blanca: Verificamos que sean listas validas antes de guardarlas
+      if (Array.isArray(dataFrag)) {
+        dataFrag.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
+        setInventario(dataFrag);
+      } else setInventario([]);
+
+      setVentas(Array.isArray(dataVentas) ? dataVentas : []);
+      setVendedores(Array.isArray(dataVend) ? dataVend : []);
+      setFrascos(Array.isArray(dataFrascos) ? dataFrascos : []);
+      setProductos(Array.isArray(dataProd) ? dataProd : []);
+
     } catch (error) {
       console.error("Error al cargar el dashboard", error);
     }
@@ -64,7 +74,6 @@ const Dashboard = () => {
     return Object.keys(agrupado).map(fecha => ({ fecha, total: agrupado[fecha] })).reverse(); 
   };
 
-  // CRUD Fragancias
   const handleGuardarPerfume = async (e) => {
     e.preventDefault();
     const url = editandoId ? `https://perfumeria-final-b.onrender.com/fragancias/${editandoId}` : 'https://perfumeria-final-b.onrender.com/fragancias';
@@ -85,7 +94,6 @@ const Dashboard = () => {
     cargarDatos();
   };
 
-  // CRUD Frascos
   const handleGuardarFrasco = async (e) => {
     e.preventDefault();
     const url = editandoFrascoId ? `https://perfumeria-final-b.onrender.com/frascos/${editandoFrascoId}` : 'https://perfumeria-final-b.onrender.com/frascos';
@@ -110,7 +118,6 @@ const Dashboard = () => {
     cargarDatos();
   };
 
-  // CRUD Productos Varios
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
     const url = editandoProductoId ? `https://perfumeria-final-b.onrender.com/productos/${editandoProductoId}` : 'https://perfumeria-final-b.onrender.com/productos';
@@ -135,7 +142,6 @@ const Dashboard = () => {
     cargarDatos();
   };
 
-  // Vendedores & Ventas
   const handleCrearVendedor = async (e) => {
     e.preventDefault();
     const res = await fetch('https://perfumeria-final-b.onrender.com/usuarios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...nuevoVendedor, rol: 'vendedor' }) });
@@ -241,35 +247,19 @@ const Dashboard = () => {
 
         {activeTab === 'inventario' && (
           <div className="space-y-12 animate-fade-in">
-            {/* INVENTARIO FRAGANCIAS */}
             <div>
               <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">Inventario de Fragancias</h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoId ? 'Editar Fragancia' : 'Registrar Fragancia'}</h2>
                   <form onSubmit={handleGuardarPerfume} className="space-y-4">
-                    <div>
-                      <label className="text-xs text-gray-400 font-bold uppercase">Nombre</label>
-                      <input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-bold uppercase">Precio por ml (Bs.)</label>
-                      <input type="number" step="0.10" required value={nuevoPerfume.precio_por_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, precio_por_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                    </div>
+                    <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre</label><input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                    <div><label className="text-xs text-gray-400 font-bold uppercase">Precio por ml (Bs.)</label><input type="number" step="0.10" required value={nuevoPerfume.precio_por_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, precio_por_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                     <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label>
-                        <input type="number" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima (ml)</label>
-                        <input type="number" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label><input type="number" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima (ml)</label><input type="number" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                     </div>
-                    <div className="flex gap-2 pt-4">
-                      <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoId ? 'Actualizar' : 'Guardar'}</button>
-                      {editandoId && <button type="button" onClick={() => { setEditandoId(null); setNuevoPerfume({nombre:'', stock_ml:'', stock_minimo:'', precio_por_ml:''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}
-                    </div>
+                    <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoId ? 'Actualizar' : 'Guardar'}</button>{editandoId && <button type="button" onClick={() => { setEditandoId(null); setNuevoPerfume({nombre:'', stock_ml:'', stock_minimo:'', precio_por_ml:''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
                 </div>
                 <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
@@ -291,7 +281,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* INVENTARIO FRASCOS */}
             <div>
               <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">Inventario de Frascos</h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -299,39 +288,18 @@ const Dashboard = () => {
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoFrascoId ? 'Editar Envase' : 'Registrar Envase'}</h2>
                   <form onSubmit={handleGuardarFrasco} className="space-y-4">
                     <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label>
-                        <select required value={nuevoFrasco.capacidad_ml} onChange={e => { const cap = Number(e.target.value); let nuevoTipo = nuevoFrasco.tipo; if ((cap === 5 || cap === 10) && nuevoTipo === 'Premium') nuevoTipo = 'Estandar'; setNuevoFrasco({...nuevoFrasco, capacidad_ml: cap, tipo: nuevoTipo}); }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
-                          <option value="">Seleccionar</option><option value="5">5 ml</option><option value="10">10 ml</option><option value="30">30 ml</option><option value="50">50 ml</option><option value="100">100 ml</option>
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Tipo</label>
-                        <select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none">
-                          <option value="Estandar">Estandar</option>{nuevoFrasco.capacidad_ml !== 5 && nuevoFrasco.capacidad_ml !== 10 && (<option value="Premium">Premium</option>)}
-                        </select>
-                      </div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label><select required value={nuevoFrasco.capacidad_ml} onChange={e => { const cap = Number(e.target.value); let nuevoTipo = nuevoFrasco.tipo; if ((cap === 5 || cap === 10) && nuevoTipo === 'Premium') nuevoTipo = 'Estandar'; setNuevoFrasco({...nuevoFrasco, capacidad_ml: cap, tipo: nuevoTipo}); }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="">Seleccionar</option><option value="5">5 ml</option><option value="10">10 ml</option><option value="30">30 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Tipo</label><select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="Estandar">Estandar</option>{nuevoFrasco.capacidad_ml !== 5 && nuevoFrasco.capacidad_ml !== 10 && (<option value="Premium">Premium</option>)}</select></div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label>
-                        <input type="number" required value={nuevoFrasco.stock} onChange={e => setNuevoFrasco({...nuevoFrasco, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label>
-                        <input type="number" required value={nuevoFrasco.stock_minimo} onChange={e => setNuevoFrasco({...nuevoFrasco, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label><input type="number" required value={nuevoFrasco.stock} onChange={e => setNuevoFrasco({...nuevoFrasco, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label><input type="number" required value={nuevoFrasco.stock_minimo} onChange={e => setNuevoFrasco({...nuevoFrasco, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                     </div>
-                    <div className="flex gap-2 pt-4">
-                      <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoFrascoId ? 'Actualizar' : 'Guardar'}</button>
-                      {editandoFrascoId && <button type="button" onClick={() => { setEditandoFrascoId(null); setNuevoFrasco({capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}
-                    </div>
+                    <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoFrascoId ? 'Actualizar' : 'Guardar'}</button>{editandoFrascoId && <button type="button" onClick={() => { setEditandoFrascoId(null); setNuevoFrasco({capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
                 </div>
                 <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
-                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
-                    <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Frascos</h2>
-                  </div>
+                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]"><h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Frascos</h2></div>
                   <div className="overflow-x-auto max-h-[400px]">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0"><tr><th className="p-4 font-bold uppercase tracking-wider">Envase</th><th className="p-4 font-bold uppercase tracking-wider">Stock Restante</th><th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th></tr></thead>
@@ -346,41 +314,23 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* INVENTARIO PRODUCTOS VARIOS */}
             <div>
               <h3 className="text-xl font-bold text-michova-gold mb-6 uppercase tracking-wider border-b border-[#333] pb-2">Inventario Productos Varios</h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoProductoId ? 'Editar Producto' : 'Registrar Producto'}</h2>
                   <form onSubmit={handleGuardarProducto} className="space-y-4">
-                    <div>
-                      <label className="text-xs text-gray-400 font-bold uppercase">Nombre del Producto</label>
-                      <input type="text" required value={nuevoProducto.nombre} onChange={e => setNuevoProducto({...nuevoProducto, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" placeholder="Caja de regalo..." />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 font-bold uppercase">Precio Unitario (Bs.)</label>
-                      <input type="number" step="0.5" required value={nuevoProducto.precio} onChange={e => setNuevoProducto({...nuevoProducto, precio: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                    </div>
+                    <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre del Producto</label><input type="text" required value={nuevoProducto.nombre} onChange={e => setNuevoProducto({...nuevoProducto, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" placeholder="Caja de regalo..." /></div>
+                    <div><label className="text-xs text-gray-400 font-bold uppercase">Precio Unitario (Bs.)</label><input type="number" step="0.5" required value={nuevoProducto.precio} onChange={e => setNuevoProducto({...nuevoProducto, precio: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                     <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label>
-                        <input type="number" required value={nuevoProducto.stock} onChange={e => setNuevoProducto({...nuevoProducto, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label>
-                        <input type="number" required value={nuevoProducto.stock_minimo} onChange={e => setNuevoProducto({...nuevoProducto, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
-                      </div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label><input type="number" required value={nuevoProducto.stock} onChange={e => setNuevoProducto({...nuevoProducto, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label><input type="number" required value={nuevoProducto.stock_minimo} onChange={e => setNuevoProducto({...nuevoProducto, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                     </div>
-                    <div className="flex gap-2 pt-4">
-                      <button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoProductoId ? 'Actualizar' : 'Guardar'}</button>
-                      {editandoProductoId && <button type="button" onClick={() => { setEditandoProductoId(null); setNuevoProducto({nombre: '', precio: '', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}
-                    </div>
+                    <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoProductoId ? 'Actualizar' : 'Guardar'}</button>{editandoProductoId && <button type="button" onClick={() => { setEditandoProductoId(null); setNuevoProducto({nombre: '', precio: '', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
                 </div>
                 <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
-                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]">
-                    <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Productos</h2>
-                  </div>
+                  <div className="p-4 border-b border-[#333] bg-[#0a0a0a]"><h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Productos</h2></div>
                   <div className="overflow-x-auto max-h-[400px]">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0"><tr><th className="p-4 font-bold uppercase tracking-wider">Producto</th><th className="p-4 font-bold uppercase tracking-wider">Precio</th><th className="p-4 font-bold uppercase tracking-wider">Stock</th><th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th></tr></thead>
@@ -434,8 +384,8 @@ const Dashboard = () => {
             <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
               <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">Dar de Alta Empleado</h2>
               <form onSubmit={handleCrearVendedor} className="space-y-4">
-                <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre Completo</label><input type="text" required value={nuevoVendedor.nombre} onChange={e => setNuevoVendedor({...nuevoVendedor, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                <div><label className="text-xs text-gray-400 font-bold uppercase">Correo (Login)</label><input type="email" required value={nuevoVendedor.email} onChange={e => setNuevoVendedor({...nuevoVendedor, email: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre Completo</label><input type="text" required value={nuevoVendedor.nombre} onChange={e => setNuevoVendedor({...nuevoVendedor, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" placeholder="Ej: Juan Perez" /></div>
+                <div><label className="text-xs text-gray-400 font-bold uppercase">Correo (Login)</label><input type="email" required value={nuevoVendedor.email} onChange={e => setNuevoVendedor({...nuevoVendedor, email: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" placeholder="juan@michova.com" /></div>
                 <div><label className="text-xs text-gray-400 font-bold uppercase">Contraseña Temporal</label><input type="password" required value={nuevoVendedor.password} onChange={e => setNuevoVendedor({...nuevoVendedor, password: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
                 <button type="submit" className="w-full bg-michova-silver text-black font-bold py-3 rounded mt-4 hover:bg-white transition-colors uppercase text-sm">Registrar Vendedor</button>
               </form>
@@ -454,25 +404,6 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-[#333] rounded-lg p-8 max-w-md w-full shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-[#333] pb-4 mb-6">
-              <h2 className="text-xl font-bold text-white uppercase tracking-wider">Cambiar Contraseña</h2>
-              <button onClick={() => setShowPasswordModal(false)} className="text-gray-500 hover:text-white text-xl font-bold">X</button>
-            </div>
-            <form onSubmit={handleCambiarPassword} className="space-y-4">
-              {passStatus.error && <div className="bg-red-900/50 border border-red-500 text-red-200 text-sm p-3 rounded">{passStatus.error}</div>}
-              {passStatus.success && <div className="bg-green-900/50 border border-green-500 text-green-200 text-sm p-3 rounded">{passStatus.success}</div>}
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Actual</label><input type="password" required value={passData.actual} onChange={e => setPassData({...passData, actual: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Nueva</label><input type="password" required value={passData.nueva} onChange={e => setPassData({...passData, nueva: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div><label className="text-xs text-gray-400 font-bold uppercase block mb-1">Confirmar</label><input type="password" required value={passData.confirmar} onChange={e => setPassData({...passData, confirmar: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded focus:border-michova-gold outline-none" /></div>
-              <div className="flex gap-3 pt-4"><button type="submit" disabled={passStatus.loading} className="flex-1 bg-michova-gold text-michova-black font-bold py-3 rounded uppercase text-sm hover:bg-yellow-400 transition-colors disabled:opacity-50">Actualizar</button><button type="button" onClick={() => setShowPasswordModal(false)} className="bg-[#333] text-white px-6 rounded font-bold uppercase text-sm hover:bg-[#444] transition-colors">Cancelar</button></div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
