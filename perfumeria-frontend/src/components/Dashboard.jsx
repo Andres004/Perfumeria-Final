@@ -260,7 +260,7 @@ const Dashboard = () => {
 
                     <div>
                       <label className="text-xs text-gray-400 font-bold uppercase">Precio por ml (Bs.)</label>
-                      <input type="number" step="0.10" min="0" required value={nuevoPerfume.precio_por_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, precio_por_ml: e.target.value.replace(/^0+(?=\d)/, '') || 0})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      <input type="text" inputMode="decimal" required value={nuevoPerfume.precio_por_ml} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoPerfume({...nuevoPerfume, precio_por_ml: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
                     </div>
                     <div className="flex gap-4">
                       <div className="flex-1">
@@ -301,13 +301,23 @@ const Dashboard = () => {
                 <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoFrascoId ? 'Editar Envase' : 'Registrar Envase'}</h2>
                   <form onSubmit={handleGuardarFrasco} className="space-y-4">
+                    
                     <div className="flex gap-4">
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label><select required value={nuevoFrasco.capacidad_ml} onChange={e => { const cap = Number(e.target.value); let nuevoTipo = nuevoFrasco.tipo; if ((cap === 5 || cap === 10) && nuevoTipo === 'Premium') nuevoTipo = 'Estandar'; setNuevoFrasco({...nuevoFrasco, capacidad_ml: cap, tipo: nuevoTipo}); }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="">Seleccionar</option><option value="5">5 ml</option><option value="10">10 ml</option><option value="30">30 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Tipo</label><select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="Estandar">Estandar</option>{nuevoFrasco.capacidad_ml !== 5 && nuevoFrasco.capacidad_ml !== 10 && (<option value="Premium">Premium</option>)}</select></div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Capacidad (ml)</label><select required value={nuevoFrasco.capacidad_ml} onChange={e => { const cap = Number(e.target.value); let nuevoTipo = nuevoFrasco.tipo; if ((cap === 5 || cap === 10) && nuevoTipo === 'Premium') nuevoTipo = 'Estandar'; setNuevoFrasco({...nuevoFrasco, capacidad_ml: cap, tipo: nuevoTipo}); }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="">Seleccionar</option><option value="5">5 ml</option><option value="10">10 ml</option><option value="30">30 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Tipo</label><select required value={nuevoFrasco.tipo} onChange={e => setNuevoFrasco({...nuevoFrasco, tipo: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none"><option value="Estandar">Estandar</option>{nuevoFrasco.capacidad_ml !== 5 && nuevoFrasco.capacidad_ml !== 10 && (<option value="Premium">Premium</option>)}</select></div>
                     </div>
+                    
                     <div className="flex gap-4">
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label><input type="number" required value={nuevoFrasco.stock} onChange={e => setNuevoFrasco({...nuevoFrasco, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label><input type="number" required value={nuevoFrasco.stock_minimo} onChange={e => setNuevoFrasco({...nuevoFrasco, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label>
+                        <input type="text" inputMode="decimal" required value={nuevoFrasco.stock} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoFrasco({...nuevoFrasco, stock: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label>
+                        <input type="text" inputMode="decimal" required value={nuevoFrasco.stock_minimo} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoFrasco({...nuevoFrasco, stock_minimo: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
                     </div>
                     <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoFrascoId ? 'Actualizar' : 'Guardar'}</button>{editandoFrascoId && <button type="button" onClick={() => { setEditandoFrascoId(null); setNuevoFrasco({capacidad_ml: '', tipo: 'Estandar', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
@@ -335,11 +345,21 @@ const Dashboard = () => {
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoProductoId ? 'Editar Producto' : 'Registrar Producto'}</h2>
                   <form onSubmit={handleGuardarProducto} className="space-y-4">
                     <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre del Producto</label><input type="text" required value={nuevoProducto.nombre} onChange={e => setNuevoProducto({...nuevoProducto, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" placeholder="Caja de regalo..." /></div>
-                    <div><label className="text-xs text-gray-400 font-bold uppercase">Precio Unitario (Bs.)</label><input type="number" step="0.5" required value={nuevoProducto.precio} onChange={e => setNuevoProducto({...nuevoProducto, precio: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                    <div className="flex gap-4">
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label><input type="number" required value={nuevoProducto.stock} onChange={e => setNuevoProducto({...nuevoProducto, stock: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label><input type="number" required value={nuevoProducto.stock_minimo} onChange={e => setNuevoProducto({...nuevoProducto, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                    <div>
+                      <label className="text-xs text-gray-400 font-bold uppercase">Precio Unitario (Bs.)</label>
+                      <input type="text" inputMode="decimal" required value={nuevoProducto.precio} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoProducto({...nuevoProducto, precio: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
                     </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual</label>
+                        <input type="text" inputMode="decimal" required value={nuevoProducto.stock} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoProducto({...nuevoProducto, stock: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima</label>
+                        <input type="text" inputMode="decimal" required value={nuevoProducto.stock_minimo} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setNuevoProducto({...nuevoProducto, stock_minimo: val.replace(/^0+(?=\d)/, '') || 0}); } }} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                    </div>
+
                     <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoProductoId ? 'Actualizar' : 'Guardar'}</button>{editandoProductoId && <button type="button" onClick={() => { setEditandoProductoId(null); setNuevoProducto({nombre: '', precio: '', stock: '', stock_minimo: ''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
                 </div>
