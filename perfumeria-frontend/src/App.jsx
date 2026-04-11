@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './components/Login.jsx';
+import Login from './components/login/page.jsx';
 import PuntoDeVenta from './components/PuntoDeVenta.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
