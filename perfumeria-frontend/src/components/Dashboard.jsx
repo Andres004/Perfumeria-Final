@@ -253,12 +253,26 @@ const Dashboard = () => {
                 <div className="bg-[#111] border border-[#333] p-6 rounded h-fit">
                   <h2 className="text-michova-silver font-bold uppercase tracking-wider mb-6 border-b border-[#333] pb-2">{editandoId ? 'Editar Fragancia' : 'Registrar Fragancia'}</h2>
                   <form onSubmit={handleGuardarPerfume} className="space-y-4">
-                    <div><label className="text-xs text-gray-400 font-bold uppercase">Nombre</label><input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                    <div><label className="text-xs text-gray-400 font-bold uppercase">Precio por ml (Bs.)</label><input type="number" step="0.10" required value={nuevoPerfume.precio_por_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, precio_por_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                    <div className="flex gap-4">
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label><input type="number" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
-                      <div className="flex-1"><label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima (ml)</label><input type="number" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: Number(e.target.value)})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" /></div>
+                    <div>
+                      <label className="text-xs text-gray-400 font-bold uppercase">Nombre</label>
+                        <input type="text" required value={nuevoPerfume.nombre} onChange={e => setNuevoPerfume({...nuevoPerfume, nombre: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
                     </div>
+
+                    <div>
+                      <label className="text-xs text-gray-400 font-bold uppercase">Precio por ml (Bs.)</label>
+                      <input type="number" step="0.10" min="0" required value={nuevoPerfume.precio_por_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, precio_por_ml: e.target.value.replace(/^0+(?=\d)/, '') || 0})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Stock Actual (ml)</label>
+                        <input type="number" min="0" required value={nuevoPerfume.stock_ml} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_ml: e.target.value.replace(/^0+(?=\d)/, '') || 0})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-400 font-bold uppercase">Alerta Minima (ml)</label>
+                        <input type="number" min="0" required value={nuevoPerfume.stock_minimo} onChange={e => setNuevoPerfume({...nuevoPerfume, stock_minimo: e.target.value.replace(/^0+(?=\d)/, '') || 0})} className="w-full bg-[#1a1a1a] border border-[#333] p-3 text-white rounded mt-1 focus:border-michova-gold outline-none" />
+                      </div>
+                    </div>
+
                     <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-michova-gold text-black font-bold py-3 rounded hover:bg-yellow-400 transition-colors uppercase text-sm">{editandoId ? 'Actualizar' : 'Guardar'}</button>{editandoId && <button type="button" onClick={() => { setEditandoId(null); setNuevoPerfume({nombre:'', stock_ml:'', stock_minimo:'', precio_por_ml:''}); }} className="bg-[#333] text-white px-4 rounded hover:bg-[#444] text-sm font-bold uppercase">Cancelar</button>}</div>
                   </form>
                 </div>
