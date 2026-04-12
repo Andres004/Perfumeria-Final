@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, NavLink, Outlet } from 'react-router-dom';
+import logotipo from '../../assets/logotipo.png'; 
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -36,10 +37,20 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-michova-black text-white font-sans relative" translate="no">
       <header className="bg-[#0a0a0a] border-b border-[#333] p-4 sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-michova-gold tracking-widest">MICHOVA ADMIN</h1>
-            <p className="text-michova-silver tracking-widest uppercase text-xs mt-1">Hola, {localStorage.getItem('userName')}</p>
+          
+          {/*logo*/}
+          <div className="flex items-center gap-3">
+            <img 
+              src={logotipo} 
+              alt="Logo Michova" 
+              className="h-15 object-contain drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]" 
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-michova-gold tracking-widest">MICHOVA ADMIN</h1>
+              <p className="text-michova-silver tracking-widest uppercase text-xs mt-1">Hola, {localStorage.getItem('userName')}</p>
+            </div>
           </div>
+
           <div className="flex gap-4 items-center">
             <button onClick={() => window.open('https://perfumeria-final-b.onrender.com/reporte-excel', '_blank')} className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-bold transition-colors">Descargar Excel</button>
             <button onClick={() => setShowPasswordModal(true)} className="text-gray-400 hover:text-white px-2 py-2 rounded text-sm font-bold transition-colors">Mi Cuenta</button>

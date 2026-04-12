@@ -48,21 +48,25 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-michova-black flex items-center justify-center px-4 font-sans relative overflow-hidden" translate="no">
-      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${logotipo})`, backgroundSize: '150px', transform: 'rotate(-30deg) scale(1.5)' }}></div>
+      
+      {/* MARCA DE AGUA (Cubre toda la pantalla sin cortar esquinas) */}
+      <div 
+        className="absolute z-0 opacity-6 pointer-events-none w-[200vw] h-[200vh] top-1/2 left-1/2" 
+        style={{ 
+          backgroundImage: `url(${logotipo})`, 
+          backgroundSize: '250px', 
+          transform: 'translate(-50%, -50%) rotate(-30deg)' 
+        }}
+      ></div>
       
       <div className="max-w-md w-full bg-[#111111] rounded-lg shadow-2xl p-8 border border-[#333333] z-10 animate-fade-in relative backdrop-blur-sm bg-opacity-90">
         
+
         <div className="text-center mb-10">
-          <img 
-            src={logotipo} 
-            alt="Logotipo de Michova" 
-            className="h-24 mx-auto mb-4 object-contain drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]" 
-          />
-          
-          <h1 className="text-5xl font-bold text-michova-gold tracking-wider mb-2 drop-shadow-md">
+          <h1 className="text-5xl font-bold text-michova-gold tracking-wider drop-shadow-md">
             MICHOVA
           </h1>
-          <p className="text-michova-silver text-xs tracking-[0.3em] uppercase">
+          <p className="text-michova-silver text-xs tracking-[0.3em] uppercase mt-1">
             Sistema de Gestión
           </p>
         </div>
