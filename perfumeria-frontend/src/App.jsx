@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/login/page.jsx';
-import PuntoDeVenta from './components/PuntoDeVenta.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 import DashboardLayout from './components/dashboard/layout.jsx';
@@ -11,6 +10,11 @@ import FrascosPage from './components/dashboard/inventario/frascos/page.jsx';
 import ProductosVariosPage from './components/dashboard/inventario/varios/page.jsx';
 import VentasPage from './components/dashboard/ventas/page.jsx'; 
 import VendedoresPage from './components/dashboard/vendedores/page.jsx';
+
+import VentaLayout from './components/ventas/layout.jsx';
+import VentaPerfumePage from './components/ventas/perfume/page.jsx';
+import VentaEsenciaPage from './components/ventas/esencia/page.jsx';
+import VentaProductoPage from './components/ventas/producto/page.jsx';
 
 function App() {
   return (
@@ -42,10 +46,14 @@ function App() {
           path="/venta" 
           element={
             <ProtectedRoute>
-              <PuntoDeVenta />
+              <VentaLayout />
             </ProtectedRoute>
           } 
-        />
+        >
+          <Route index element={<VentaPerfumePage />} />
+          <Route path="esencia" element={<VentaEsenciaPage />} />
+          <Route path="producto" element={<VentaProductoPage />} />
+        </Route>
       </Routes>
     </Router>
   );

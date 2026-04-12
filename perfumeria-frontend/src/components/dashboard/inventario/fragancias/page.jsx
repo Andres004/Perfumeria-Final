@@ -21,7 +21,15 @@ const FraganciasPage = () => {
     }
   };
 
-  useEffect(() => { cargarDatos(); }, []);
+  useEffect(() => {
+    cargarDatos();
+    
+    const intervalo = setInterval(() => {
+      cargarDatos();
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, []);
 
   const handleGuardarPerfume = async (e) => {
     e.preventDefault();
@@ -75,7 +83,12 @@ const FraganciasPage = () => {
         </div>
         <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
           <div className="p-4 border-b border-[#333] bg-[#0a0a0a] flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual</h2>
+              <span className="text-[10px] text-green-500 flex items-center gap-1 animate-pulse uppercase tracking-wider font-bold bg-green-900/20 px-2 py-1 rounded border border-green-900/50">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span> En vivo
+              </span>
+            </div>
             <input type="text" placeholder="Buscar fragancia..." value={busquedaInventario} onChange={(e) => setBusquedaInventario(e.target.value)} className="bg-[#1a1a1a] border border-[#333] text-white px-4 py-2 rounded text-sm focus:border-michova-gold outline-none w-full md:w-64" />
           </div>
           <div className="overflow-x-auto max-h-[400px]">

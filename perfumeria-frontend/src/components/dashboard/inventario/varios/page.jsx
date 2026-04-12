@@ -15,7 +15,15 @@ const ProductosVariosPage = () => {
     }
   };
 
-  useEffect(() => { cargarDatos(); }, []);
+  useEffect(() => {
+    cargarDatos();
+    
+    const intervalo = setInterval(() => {
+      cargarDatos();
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, []);
 
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
@@ -70,7 +78,12 @@ const ProductosVariosPage = () => {
           </form>
         </div>
         <div className="lg:col-span-2 bg-[#111] border border-[#333] rounded overflow-hidden">
-          <div className="p-4 border-b border-[#333] bg-[#0a0a0a]"><h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Productos</h2></div>
+          <div className="p-4 border-b border-[#333] bg-[#0a0a0a] flex items-center gap-3">
+            <h2 className="text-michova-silver font-bold uppercase tracking-wider">Inventario Actual de Productos</h2>
+            <span className="text-[10px] text-green-500 flex items-center gap-1 animate-pulse uppercase tracking-wider font-bold bg-green-900/20 px-2 py-1 rounded border border-green-900/50">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span> En vivo
+            </span>
+          </div>
           <div className="overflow-x-auto max-h-[400px]">
             <table className="w-full text-left text-sm">
               <thead className="bg-[#1a1a1a] text-gray-400 sticky top-0"><tr><th className="p-4 font-bold uppercase tracking-wider">Producto</th><th className="p-4 font-bold uppercase tracking-wider">Precio</th><th className="p-4 font-bold uppercase tracking-wider">Stock</th><th className="p-4 font-bold uppercase tracking-wider text-right">Acciones</th></tr></thead>
