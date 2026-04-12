@@ -132,30 +132,49 @@ const VentaLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-michova-black text-white p-4 md:p-8 font-sans relative" translate="no">
-      <div className="max-w-7xl mx-auto">
-        
-        <header className="mb-6 border-b border-[#333] pb-4 flex justify-between items-end">
+    <div className="min-h-screen bg-michova-black text-white font-sans relative" translate="no">
+      <header className="bg-[#0a0a0a] border-b border-[#333] p-4 sticky top-0 z-10 shadow-lg">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          
           <div className="flex items-center gap-3">
-            <img src={logotipo} alt="Logo Michova" className="h-14 object-contain drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]" />
+            <img 
+              src={logotipo} 
+              alt="Logo Michova" 
+              className="h-15 object-contain drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]" 
+            />
             <div>
-              <h1 className="text-3xl font-bold text-michova-gold tracking-widest">MICHOVA</h1>
-              <p className="text-michova-silver tracking-widest uppercase text-xs mt-1">Terminal: {localStorage.getItem('userName')}</p>
+              <h1 className="text-2xl font-bold text-michova-gold tracking-widest">MICHOVA</h1>
+              <p className="text-michova-silver tracking-widest uppercase text-xs mt-1">Hola, {localStorage.getItem('userName')}</p>
             </div>
           </div>
 
           <div className="flex gap-4 items-center">
             {localStorage.getItem('role') === 'admin' && (
-              <button onClick={() => navigate('/dashboard')} className="bg-[#222] hover:bg-[#333] px-4 py-2 rounded text-sm transition-colors">Panel Admin</button>
+              <button onClick={() => navigate('/dashboard')} className="bg-[#222] hover:bg-[#333] px-4 py-2 rounded text-sm font-bold transition-colors">Panel Admin</button>
             )}
             <button onClick={() => setShowPasswordModal(true)} className="text-gray-400 hover:text-white px-2 py-2 rounded text-sm font-bold transition-colors">Mi Cuenta</button>
             <button onClick={() => { localStorage.clear(); navigate('/'); }} className="border border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-4 py-2 rounded text-sm font-bold transition-colors">Salir</button>
           </div>
-        </header>
+        </div>
+      </header>
 
+      <div className="max-w-7xl mx-auto p-6">
         <div className="flex gap-2 border-b border-[#333] mb-8 overflow-x-auto">
           {tabs.map(tab => (
-            <NavLink key={tab.path} to={tab.path} end={tab.end} className={({ isActive }) => `px-6 py-3 font-bold uppercase tracking-wider text-sm transition-colors border-b-2 ${isActive ? 'border-michova-gold text-michova-gold bg-[#111]' : 'border-transparent text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}>{tab.label}</NavLink>
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.end}
+              className={({ isActive }) => 
+                `px-6 py-3 font-bold uppercase tracking-wider text-sm transition-colors border-b-2 ${
+                  isActive 
+                    ? 'border-michova-gold text-michova-gold bg-[#111]' 
+                    : 'border-transparent text-gray-500 hover:text-white hover:bg-[#1a1a1a]'
+                }`
+              }
+            >
+              {tab.label}
+            </NavLink>
           ))}
         </div>
 
@@ -188,7 +207,7 @@ const VentaLayout = () => {
                 
                 {ticketFinalizado && (
                   <div className="bg-green-900/20 border border-green-900/50 p-4 rounded text-center">
-                    <p className="text-green-500 font-bold uppercase tracking-widest text-sm mb-2">Venta Registrada Correctamente</p>
+                    <p className="text-green-500 font-bold uppercase tracking-widest text-sm mb-2">Venta Procesada</p>
                     <p className="text-white text-xs mb-4">La venta ha sido guardada en el historial.</p>
                     <button onClick={imprimirTicket} className="bg-white text-black font-bold py-2 px-4 rounded hover:bg-gray-200 transition-colors w-full uppercase text-xs tracking-wider">
                       🖨️ Imprimir / Descargar PDF
@@ -226,7 +245,6 @@ const VentaLayout = () => {
               )}
             </div>
           </div>
-
         </div>
       </div>
 
