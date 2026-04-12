@@ -8,7 +8,7 @@ import InventarioLayout from './components/dashboard/inventario/layout.jsx';
 import FraganciasPage from './components/dashboard/inventario/fragancias/page.jsx';
 import FrascosPage from './components/dashboard/inventario/frascos/page.jsx';
 import ProductosVariosPage from './components/dashboard/inventario/varios/page.jsx';
-import VentasPage from './components/dashboard/ventas/page.jsx'; 
+import HistorialPage from './components/dashboard/historial/page.jsx'; 
 import VendedoresPage from './components/dashboard/vendedores/page.jsx';
 
 import VentaLayout from './components/ventas/layout.jsx';
@@ -38,7 +38,7 @@ function App() {
             <Route path="varios" element={<ProductosVariosPage />} />
           </Route>
 
-          <Route path="ventas" element={<VentasPage />} />
+          <Route path="historial" element={<HistorialPage />} />
           <Route path="vendedores" element={<VendedoresPage />} />
         </Route>
         
