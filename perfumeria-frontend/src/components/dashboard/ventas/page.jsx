@@ -13,7 +13,15 @@ const VentasPage = () => {
     }
   };
 
-  useEffect(() => { cargarDatos(); }, []);
+  useEffect(() => {
+    cargarDatos();
+    
+    const intervalo = setInterval(() => {
+      cargarDatos();
+    }, 5000);
+
+    return () => clearInterval(intervalo);
+  }, []);
 
   const handleEliminarVentaSola = async (id) => {
     if (!window.confirm('Confirmar eliminacion de venta.')) return;
@@ -30,7 +38,13 @@ const VentasPage = () => {
   return (
     <div className="bg-[#111] border border-[#333] rounded overflow-hidden animate-fade-in shadow-md">
       <div className="p-4 border-b border-[#333] bg-[#0a0a0a] flex justify-between items-center">
-        <div><h2 className="text-michova-silver font-bold uppercase tracking-wider">Todas las transacciones</h2><span className="text-xs text-gray-500">Total Registros: {ventas.length}</span></div>
+        <div>
+          <h2 className="text-michova-silver font-bold uppercase tracking-wider">Todas las transacciones</h2>
+          <span className="text-xs text-gray-500">Total Registros: {ventas.length}</span>
+          <span className="text-xs text-green-500 ml-4 flex-inline items-center gap-1 animate-pulse">
+            ● Actualizando en tiempo real
+          </span>
+        </div>
         <button onClick={handleBorrarHistorialVentas} className="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 px-4 py-2 rounded text-xs font-bold uppercase transition-colors">Borrar Todo El Historial</button>
       </div>
       <div className="overflow-x-auto max-h-[700px]">
