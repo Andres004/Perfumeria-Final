@@ -7,7 +7,7 @@ const VentaEsenciaPage = () => {
   const [fraganciaBuscada, setFraganciaBuscada] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
-  const [tamano, setTamano] = useState(30);
+  const [tamano, setTamano] = useState('');
   const [descuentoManual, setDescuentoManual] = useState(0);
 
   useEffect(() => {
@@ -70,7 +70,7 @@ const VentaEsenciaPage = () => {
 
       <div>
         <label className="block text-michova-silver text-sm font-bold mb-3 uppercase tracking-wider">2. Cantidad de Esencia (ml)</label>
-        <input type="number" min="1" value={tamano} onChange={e => setTamano(Number(e.target.value))} className="w-full bg-[#1a1a1a] border border-[#333] rounded p-4 text-white text-lg focus:border-michova-gold outline-none font-bold" />
+        <input type="text" inputMode="decimal" value={tamano} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setTamano(val.replace(/^0+(?=\d)/, '') || 0); } }} className="w-full bg-[#1a1a1a] border border-[#333] rounded p-4 text-white text-lg focus:border-michova-gold outline-none font-bold" />
       </div>
 
       <div className="bg-[#1a1a1a] p-6 rounded-lg border border-[#333]">

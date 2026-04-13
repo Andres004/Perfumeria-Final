@@ -5,7 +5,7 @@ const VentaProductoPage = () => {
   const { agregarAlCarrito } = useOutletContext();
   const [productosVarios, setProductosVarios] = useState([]);
   const [productoSeleccionadoId, setProductoSeleccionadoId] = useState('');
-  const [cantidadProducto, setCantidadProducto] = useState(1);
+  const [cantidadProducto, setCantidadProducto] = useState('');
   const [descuentoManual, setDescuentoManual] = useState(0);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ const VentaProductoPage = () => {
 
       <div>
         <label className="block text-michova-silver text-sm font-bold mb-3 uppercase tracking-wider">2. Cantidad de Unidades</label>
-        <input type="number" min="1" value={cantidadProducto} onChange={e => setCantidadProducto(Number(e.target.value))} required className="w-full bg-[#1a1a1a] border border-[#333] rounded p-4 text-white focus:border-michova-gold outline-none text-lg font-bold" />
+        <input type="text" inputMode="decimal" required value={cantidadProducto} onChange={e => { let val = e.target.value.replace(',', '.'); if (/^\d*\.?\d*$/.test(val)) { setCantidadProducto(val.replace(/^0+(?=\d)/, '') || 0); } }} className="w-full bg-[#1a1a1a] border border-[#333] rounded p-4 text-white focus:border-michova-gold outline-none text-lg font-bold" />
       </div>
 
       <div className="bg-[#1a1a1a] p-6 rounded-lg border border-[#333]">
